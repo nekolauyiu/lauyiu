@@ -41,6 +41,7 @@ function shell(title: string, active: string, body: string, script = '') {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" type="image/png" href="/static/favicon.png">
   <title>${title} · neko</title>
   <style>
     ${BASE_CSS}
@@ -156,9 +157,10 @@ function shell(title: string, active: string, body: string, script = '') {
       color: ${TEXT_M}; text-transform: uppercase;
     }
     .tc-title {
-      font-family: 'Playfair Display', serif;
-      font-size: 19px; color: ${TEXT_D};
+      font-family: 'Press Start 2P', monospace;
+      font-size: 11px; color: ${TEXT_D};
       margin: 7px 0 9px;
+      line-height: 1.6;
     }
     .tc-body {
       font-size: 13px; color: ${TEXT_M};
