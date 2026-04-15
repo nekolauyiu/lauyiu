@@ -332,6 +332,8 @@ function shell(title: string, active: string, body: string, script = '') {
     .det-body {
       font-size: 14px; line-height: 2.1;
       color: ${TEXT_D}; white-space: pre-wrap;
+      word-break: break-word;
+      overflow-wrap: break-word;
     }
     hr.div {
       border: none;
