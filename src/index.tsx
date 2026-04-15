@@ -932,18 +932,38 @@ hono.get('/', (c) => {
       renderImgPreview();
     }
 
+    // compress image before storing: max 1200px, quality 0.72
+    function compressImg(file, cb){
+      const reader=new FileReader();
+      reader.onload=function(ev){
+        const img=new Image();
+        img.onload=function(){
+          const MAX=1200;
+          let w=img.width, h=img.height;
+          if(w>MAX||h>MAX){
+            if(w>h){ h=Math.round(h*MAX/w); w=MAX; }
+            else   { w=Math.round(w*MAX/h); h=MAX; }
+          }
+          const canvas=document.createElement('canvas');
+          canvas.width=w; canvas.height=h;
+          canvas.getContext('2d').drawImage(img,0,0,w,h);
+          cb(canvas.toDataURL('image/jpeg',0.72));
+        };
+        img.src=ev.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
+
     document.getElementById('eimages').addEventListener('change',function(){
       const files=[...this.files];
       let done=0;
       if(!files.length) return;
       files.forEach(f=>{
-        const reader=new FileReader();
-        reader.onload=e=>{
-          imgData.push(e.target.result);
+        compressImg(f, function(dataUrl){
+          imgData.push(dataUrl);
           done++;
           if(done===files.length) renderImgPreview();
-        };
-        reader.readAsDataURL(f);
+        });
       });
       this.value='';
     });
@@ -1116,32 +1136,38 @@ hono.get('/', (c) => {
 
     async function saveEntry(){
       if(!isAuthed()){ showToast('请先解锁'); return; }
-      const id=document.getElementById('eid').value;
-      const lrows=[...document.querySelectorAll('#elinks .link-row')];
-      const links=lrows.map(row=>{
-        const ins=row.querySelectorAll('input');
-        return {url:ins[0].value.trim(), label:''};
-      }).filter(l=>l.url);
-      const images=[...imgData];
-      const dateVal=document.getElementById('edate').value;
-      const body={
-        date:dateVal,
-        title:dateVal||'日志',
-        content:document.getElementById('econtent').value.trim(),
-        emoji:'📖',
-        tags:[],
-        images,
-        links
-      };
-      const url=id?'/api/trips/'+id:'/api/trips';
-      const r=await fetch(url,{
-        method:id?'PUT':'POST',
-        headers:{'Content-Type':'application/json','Authorization':'Bearer '+_token},
-        body:JSON.stringify(body)
-      });
-      if(r.ok){ closeEdit(); showToast(id?'UPDATED ✓':'SAVED ✓'); load(); }
-      else if(r.status===401){ showToast('登录已过期，请重新解锁'); _token=''; localStorage.removeItem('neko_token'); applyAuthUI(); }
-      else { showToast('保存失败'); }
+      const saveBtn=document.querySelector('#editOv .btn-p');
+      if(saveBtn){ saveBtn.textContent='SAVING…'; saveBtn.disabled=true; }
+      try{
+        const id=document.getElementById('eid').value;
+        const lrows=[...document.querySelectorAll('#elinks .link-row')];
+        const links=lrows.map(row=>{
+          const ins=row.querySelectorAll('input');
+          return {url:ins[0].value.trim(), label:''};
+        }).filter(l=>l.url);
+        const images=[...imgData];
+        const dateVal=document.getElementById('edate').value;
+        const body={
+          date:dateVal,
+          title:dateVal||'日志',
+          content:document.getElementById('econtent').value.trim(),
+          emoji:'📖',
+          tags:[],
+          images,
+          links
+        };
+        const url=id?'/api/trips/'+id:'/api/trips';
+        const r=await fetch(url,{
+          method:id?'PUT':'POST',
+          headers:{'Content-Type':'application/json','Authorization':'Bearer '+_token},
+          body:JSON.stringify(body)
+        });
+        if(r.ok){ closeEdit(); showToast(id?'UPDATED ✓':'SAVED ✓'); load(); }
+        else if(r.status===401){ showToast('登录已过期，请重新解锁'); _token=''; localStorage.removeItem('neko_token'); applyAuthUI(); }
+        else { showToast('保存失败'); }
+      } finally {
+        if(saveBtn){ saveBtn.textContent='SAVE'; saveBtn.disabled=false; }
+      }
     }
 
     // viewOv: clicking outside closes it; editOv: only CANCEL closes it
