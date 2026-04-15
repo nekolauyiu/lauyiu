@@ -217,6 +217,13 @@ function shell(title: string, active: string, body: string, script = '') {
       font-size: 9px;
       letter-spacing: 1px;
     }
+    #authNewPwd::placeholder, #authNewPwd2::placeholder {
+      font-family: 'Press Start 2P', monospace;
+      font-size: 7px;
+      letter-spacing: .5px;
+      color: ${TEXT_M};
+      opacity: .7;
+    }
     .fg textarea {
       min-height: 240px; resize: vertical; line-height: 1.9;
     }
@@ -609,9 +616,7 @@ function shell(title: string, active: string, body: string, script = '') {
     }
   });
 
-  document.getElementById('authOv').addEventListener('click',function(e){
-    if(e.target===this) closeAuth();
-  });
+  // Auth overlay: clicking outside does NOT close the dialog (only CANCEL button closes it)
 
   // init UI on page load
   applyAuthUI();
