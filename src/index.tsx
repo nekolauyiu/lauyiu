@@ -72,7 +72,11 @@ function shell(title: string, active: string, body: string, script = '') {
       letter-spacing: 2px;
       color: ${TEXT_D};
       line-height: 1;
+      cursor: pointer;
+      user-select: none;
+      transition: opacity .2s;
     }
+    .sb-brand h1:hover { opacity: .75; }
     .sb-nav { flex: 1; padding: 28px 0; }
     .sb-link {
       display: block;
@@ -249,6 +253,7 @@ function shell(title: string, active: string, body: string, script = '') {
       transition: all .25s; z-index: 50;
     }
     .fab:hover { background: ${TEXT_D}; transform: scale(1.1) translateY(-2px); }
+    .fab.hidden { display: none; }
 
     /* ── Modal ── */
     .ov {
@@ -278,6 +283,44 @@ function shell(title: string, active: string, body: string, script = '') {
       letter-spacing: 1px;
       line-height: 1.8;
     }
+
+    /* ── Auth modal (password) ── */
+    .auth-box {
+      width: 340px; max-width: 92vw;
+    }
+    .auth-box .auth-hint {
+      font-size: 11px; color: ${TEXT_M};
+      margin-bottom: 20px; line-height: 1.8;
+    }
+    .auth-err {
+      font-size: 8px; color: #b04040;
+      font-family: 'Press Start 2P', monospace;
+      margin-top: 12px; display: none;
+      line-height: 1.8;
+    }
+    /* lock badge on neko */
+    .neko-lock {
+      display: block;
+      font-size: 9px;
+      color: ${ACCENT};
+      opacity: .5;
+      margin-top: 6px;
+      font-family: 'Press Start 2P', monospace;
+      letter-spacing: .5px;
+    }
+    /* admin panel link */
+    .admin-link {
+      font-size: 7px;
+      font-family: 'Press Start 2P', monospace;
+      color: ${TEXT_M};
+      opacity: .5;
+      cursor: pointer;
+      margin-top: 14px;
+      display: inline-block;
+      letter-spacing: .5px;
+      transition: opacity .2s;
+    }
+    .admin-link:hover { opacity: 1; }
 
     /* ── Detail view ── */
     .det-head {
@@ -407,7 +450,10 @@ function shell(title: string, active: string, body: string, script = '') {
 
   <!-- Sidebar -->
   <nav class="sidebar">
-    <div class="sb-brand"><h1>neko</h1></div>
+    <div class="sb-brand">
+      <h1 id="nekoBtn" title="管理员入口">neko</h1>
+      <span class="neko-lock" id="lockBadge">🔒</span>
+    </div>
     <div class="sb-nav">
       <a class="sb-link ${active==='diary'?'on':''}" href="/">Diary</a>
       <a class="sb-link ${active==='contact'?'on':''}" href="/contact">Contact</a>
@@ -424,6 +470,35 @@ function shell(title: string, active: string, body: string, script = '') {
   </main>
 
 </div>
+
+<!-- ── Auth Modal ── -->
+<div class="ov" id="authOv">
+  <div class="mbox auth-box">
+    <h3 id="authTitle">UNLOCK</h3>
+    <p class="auth-hint" id="authHint">输入管理员密码以解锁编辑功能</p>
+    <div class="fg">
+      <label id="authLabel">PASSWORD</label>
+      <input type="password" id="authPwd" placeholder="••••••••" autocomplete="current-password">
+    </div>
+    <div id="authNewPwdWrap" style="display:none">
+      <div class="fg">
+        <label>NEW PASSWORD</label>
+        <input type="password" id="authNewPwd" placeholder="新密码">
+      </div>
+      <div class="fg">
+        <label>CONFIRM</label>
+        <input type="password" id="authNewPwd2" placeholder="再次输入新密码">
+      </div>
+    </div>
+    <div class="btn-row" style="margin-top:18px">
+      <button class="btn btn-p" id="authOkBtn">OK</button>
+      <button class="btn btn-s" onclick="closeAuth()">CANCEL</button>
+    </div>
+    <div class="auth-err" id="authErr">密码错误，请重试</div>
+    <span class="admin-link" id="changePwdLink" onclick="switchToChangePwd()">修改密码</span>
+  </div>
+</div>
+
 <div id="toast" class="toast"></div>
 <script>
   function showToast(m,d=2400){
@@ -431,6 +506,129 @@ function shell(title: string, active: string, body: string, script = '') {
     t.textContent=m; t.classList.add('show');
     setTimeout(()=>t.classList.remove('show'),d);
   }
+
+  // ── Auth state ──
+  let _token = sessionStorage.getItem('neko_token') || '';
+  let _authMode = 'login'; // 'login' | 'changepwd'
+
+  function isAuthed(){ return !!_token; }
+
+  function applyAuthUI(){
+    const fab = document.getElementById('fabBtn');
+    const lock = document.getElementById('lockBadge');
+    if(fab){
+      if(isAuthed()){ fab.classList.remove('hidden'); }
+      else { fab.classList.add('hidden'); }
+    }
+    if(lock){ lock.textContent = isAuthed() ? '🔓' : '🔒'; }
+    // hide edit/delete buttons in view modal when not authed
+    const editBtn = document.getElementById('viewEditBtn');
+    const delBtn  = document.getElementById('viewDelBtn');
+    if(editBtn) editBtn.style.display = isAuthed() ? '' : 'none';
+    if(delBtn)  delBtn.style.display  = isAuthed() ? '' : 'none';
+  }
+
+  // ── Click neko → open auth modal ──
+  document.getElementById('nekoBtn').addEventListener('click', function(){
+    if(isAuthed()){
+      // already logged in → logout
+      _token=''; sessionStorage.removeItem('neko_token');
+      applyAuthUI();
+      showToast('已退出登录');
+    } else {
+      openLogin();
+    }
+  });
+
+  function openLogin(){
+    _authMode='login';
+    document.getElementById('authTitle').textContent='UNLOCK';
+    document.getElementById('authHint').textContent='输入管理员密码以解锁编辑功能';
+    document.getElementById('authLabel').textContent='PASSWORD';
+    document.getElementById('authPwd').value='';
+    document.getElementById('authErr').style.display='none';
+    document.getElementById('authNewPwdWrap').style.display='none';
+    document.getElementById('changePwdLink').style.display='inline-block';
+    document.getElementById('authOkBtn').textContent='OK';
+    document.getElementById('authOv').classList.add('show');
+    setTimeout(()=>document.getElementById('authPwd').focus(),200);
+  }
+
+  function switchToChangePwd(){
+    _authMode='changepwd';
+    document.getElementById('authTitle').textContent='CHANGE PWD';
+    document.getElementById('authHint').textContent='输入旧密码及新密码';
+    document.getElementById('authLabel').textContent='OLD PASSWORD';
+    document.getElementById('authPwd').value='';
+    document.getElementById('authErr').style.display='none';
+    document.getElementById('authNewPwdWrap').style.display='block';
+    document.getElementById('changePwdLink').style.display='none';
+    document.getElementById('authOkBtn').textContent='CONFIRM';
+  }
+
+  function closeAuth(){
+    document.getElementById('authOv').classList.remove('show');
+    document.getElementById('authErr').style.display='none';
+  }
+
+  document.getElementById('authPwd').addEventListener('keydown',function(e){
+    if(e.key==='Enter') document.getElementById('authOkBtn').click();
+  });
+
+  document.getElementById('authOkBtn').addEventListener('click', async function(){
+    const pwd = document.getElementById('authPwd').value;
+    if(!pwd){ document.getElementById('authErr').textContent='请输入密码'; document.getElementById('authErr').style.display='block'; return; }
+
+    if(_authMode==='login'){
+      // call /api/auth
+      const r = await fetch('/api/auth',{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({password:pwd})
+      });
+      if(r.ok){
+        const d = await r.json();
+        _token = d.token;
+        sessionStorage.setItem('neko_token', _token);
+        closeAuth();
+        applyAuthUI();
+        showToast('已解锁 🔓');
+      } else {
+        document.getElementById('authErr').textContent='密码错误，请重试';
+        document.getElementById('authErr').style.display='block';
+      }
+    } else {
+      // change password
+      const np = document.getElementById('authNewPwd').value;
+      const np2 = document.getElementById('authNewPwd2').value;
+      if(!np){ document.getElementById('authErr').textContent='新密码不能为空'; document.getElementById('authErr').style.display='block'; return; }
+      if(np!==np2){ document.getElementById('authErr').textContent='两次密码不一致'; document.getElementById('authErr').style.display='block'; return; }
+      const r = await fetch('/api/admin/password',{
+        method:'POST',
+        headers:{'Content-Type':'application/json','Authorization':'Bearer '+_token},
+        body:JSON.stringify({oldPassword:pwd, newPassword:np})
+      });
+      if(r.ok){
+        closeAuth();
+        // force re-login with new password
+        _token=''; sessionStorage.removeItem('neko_token');
+        applyAuthUI();
+        showToast('密码已修改，请重新登录');
+      } else {
+        const d = await r.json().catch(()=>({}));
+        document.getElementById('authErr').textContent = d.error||'修改失败，请检查旧密码';
+        document.getElementById('authErr').style.display='block';
+      }
+    }
+  });
+
+  document.getElementById('authOv').addEventListener('click',function(e){
+    if(e.target===this) closeAuth();
+  });
+
+  // init UI on page load
+  applyAuthUI();
+
   ${script}
 </script>
 </body>
@@ -438,8 +636,6 @@ function shell(title: string, active: string, body: string, script = '') {
 }
 
 // ─── In-memory store (dev / no-KV fallback) ───────────────────────────────────
-// In production with KV the same keys are used in KV namespace DIARY_KV
-
 type Entry = {
   id: string
   date: string
@@ -453,7 +649,6 @@ type Entry = {
   updatedAt: string
 }
 
-// Simple in-memory store for dev (wrangler local KV used when available)
 const memStore: Record<string, Entry> = {}
 
 async function getEntries(kv: KVNamespace | undefined): Promise<Entry[]> {
@@ -488,8 +683,70 @@ async function delEntry(kv: KVNamespace | undefined, id: string): Promise<void> 
 }
 
 // ─── App ──────────────────────────────────────────────────────────────────────
-type Env = { DIARY_KV?: KVNamespace }
+type Env = { DIARY_KV?: KVNamespace; DIARY_PWD?: string }
 const hono = new Hono<{ Bindings: Env }>()
+
+// ── Default password fallback ──
+const DEFAULT_PWD = 'neko2026'
+
+async function getPassword(kv: KVNamespace | undefined): Promise<string> {
+  if (kv) {
+    const p = await kv.get('admin:password')
+    if (p) return p
+  }
+  return DEFAULT_PWD
+}
+
+// ── Token store (in-memory, session-level) ──
+const tokenStore = new Set<string>()
+
+function generateToken(): string {
+  const arr = new Uint8Array(24)
+  crypto.getRandomValues(arr)
+  return Array.from(arr).map(b => b.toString(16).padStart(2,'0')).join('')
+}
+
+function verifyToken(token: string): boolean {
+  return tokenStore.has(token)
+}
+
+// ── Auth middleware helper ──
+function extractToken(req: Request): string {
+  const auth = req.headers.get('Authorization') || ''
+  return auth.startsWith('Bearer ') ? auth.slice(7) : ''
+}
+
+// ── Auth endpoint ──
+hono.post('/api/auth', async (c) => {
+  const kv = (c.env as Env)?.DIARY_KV
+  const { password } = await c.req.json<{ password: string }>()
+  const correctPwd = await getPassword(kv)
+  if (password !== correctPwd) {
+    return c.json({ error: 'Invalid password' }, 401)
+  }
+  const token = generateToken()
+  tokenStore.add(token)
+  // expire token after 12 hours
+  setTimeout(() => tokenStore.delete(token), 12 * 60 * 60 * 1000)
+  return c.json({ token })
+})
+
+// ── Change password endpoint ──
+hono.post('/api/admin/password', async (c) => {
+  const token = extractToken(c.req.raw)
+  if (!verifyToken(token)) return c.json({ error: 'Unauthorized' }, 401)
+  const kv = (c.env as Env)?.DIARY_KV
+  const { oldPassword, newPassword } = await c.req.json<{ oldPassword: string; newPassword: string }>()
+  const correctPwd = await getPassword(kv)
+  if (oldPassword !== correctPwd) return c.json({ error: '旧密码错误' }, 403)
+  if (!newPassword || newPassword.length < 6) return c.json({ error: '新密码至少6位' }, 400)
+  if (kv) {
+    await kv.put('admin:password', newPassword)
+  }
+  // invalidate all tokens
+  tokenStore.clear()
+  return c.json({ ok: true })
+})
 
 // ── Diary list (home)
 hono.get('/', (c) => {
@@ -499,7 +756,7 @@ hono.get('/', (c) => {
       <div class="ph-sub" id="ds"></div>
     </div>
     <div id="list"><div class="empty"><div class="ei">📖</div><p>加载中…</p></div></div>
-    <button class="fab" id="fabBtn" title="New Entry">+</button>
+    <button class="fab hidden" id="fabBtn" title="New Entry">+</button>
 
     <!-- New / Edit modal -->
     <div class="ov" id="editOv">
@@ -555,8 +812,8 @@ hono.get('/', (c) => {
         <div id="vlinks" class="link-list"></div>
         <hr class="div">
         <div class="btn-row">
-          <button class="btn btn-p" onclick="editCurrent()">EDIT</button>
-          <button class="btn btn-d" onclick="deleteCurrent()">DELETE</button>
+          <button class="btn btn-p" id="viewEditBtn" onclick="editCurrent()">EDIT</button>
+          <button class="btn btn-d" id="viewDelBtn" onclick="deleteCurrent()">DELETE</button>
           <button class="btn btn-s" onclick="closeView()">CLOSE</button>
         </div>
       </div>
@@ -582,7 +839,7 @@ hono.get('/', (c) => {
     function render(list){
       const el=document.getElementById('list');
       if(!list.length){
-        el.innerHTML='<div class="empty"><div class="ei">✍️</div><p style="font-family:&#39;Press Start 2P&#39;,monospace;font-size:8px;line-height:2">NO ENTRIES YET<br>CLICK + TO START</p></div>';
+        el.innerHTML='<div class="empty"><div class="ei">✍️</div><p style="font-family:&#39;Press Start 2P&#39;,monospace;font-size:8px;line-height:2">NO ENTRIES YET</p></div>';
         return;
       }
       el.innerHTML=list.map(e=>\`
@@ -632,8 +889,9 @@ hono.get('/', (c) => {
       this.value='';
     });
 
-    // open new
+    // open new entry
     document.getElementById('fabBtn').onclick=()=>{
+      if(!isAuthed()){ showToast('请先解锁'); return; }
       document.getElementById('eid').value='';
       document.getElementById('econtent').value='';
       document.getElementById('elinks').innerHTML='';
@@ -678,12 +936,10 @@ hono.get('/', (c) => {
       document.getElementById('vemoji').textContent=e.emoji;
       document.getElementById('vcontent').textContent=e.content;
       document.getElementById('vtags').innerHTML=(e.tags||[]).map(t=>'<span class="pill">'+t+'</span>').join('');
-      // images
       const imgs=e.images||[];
       document.getElementById('vimages').innerHTML=imgs.map(u=>
         '<img src="'+u+'" alt="" loading="lazy" onclick="openLb(this.src)">'
       ).join('');
-      // links
       const lks=e.links||[];
       document.getElementById('vlinks').innerHTML=lks.map(l=>
         '<a class="link-item" href="'+l.url+'" target="_blank" rel="noopener noreferrer">'+
@@ -693,9 +949,12 @@ hono.get('/', (c) => {
         '</a>'
       ).join('');
       document.getElementById('viewOv').classList.add('show');
+      // apply auth UI for edit/delete buttons
+      applyAuthUI();
     }
 
     function editCurrent(){
+      if(!isAuthed()){ showToast('请先解锁'); return; }
       closeView();
       fetch('/api/trips/'+cid).then(r=>r.json()).then(d=>{
         const e=d.entry;
@@ -713,20 +972,24 @@ hono.get('/', (c) => {
     }
 
     async function deleteCurrent(){
+      if(!isAuthed()){ showToast('请先解锁'); return; }
       if(!cid||!confirm('DELETE THIS ENTRY?')) return;
-      const r=await fetch('/api/trips/'+cid,{method:'DELETE'});
+      const r=await fetch('/api/trips/'+cid,{
+        method:'DELETE',
+        headers:{'Authorization':'Bearer '+_token}
+      });
       if(r.ok){ closeView(); showToast('DELETED'); load(); }
+      else { showToast('删除失败，请重新登录'); }
     }
 
     async function saveEntry(){
+      if(!isAuthed()){ showToast('请先解锁'); return; }
       const id=document.getElementById('eid').value;
-      // collect link rows
       const lrows=[...document.querySelectorAll('#elinks .link-row')];
       const links=lrows.map(row=>{
         const ins=row.querySelectorAll('input');
         return {url:ins[0].value.trim(), label:''};
       }).filter(l=>l.url);
-      // collect images
       const images=[...imgData];
       const dateVal=document.getElementById('edate').value;
       const body={
@@ -739,9 +1002,14 @@ hono.get('/', (c) => {
         links
       };
       const url=id?'/api/trips/'+id:'/api/trips';
-      const r=await fetch(url,{method:id?'PUT':'POST',
-        headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+      const r=await fetch(url,{
+        method:id?'PUT':'POST',
+        headers:{'Content-Type':'application/json','Authorization':'Bearer '+_token},
+        body:JSON.stringify(body)
+      });
       if(r.ok){ closeEdit(); showToast(id?'UPDATED ✓':'SAVED ✓'); load(); }
+      else if(r.status===401){ showToast('登录已过期，请重新解锁'); _token=''; sessionStorage.removeItem('neko_token'); applyAuthUI(); }
+      else { showToast('保存失败'); }
     }
 
     // close on overlay
@@ -771,14 +1039,14 @@ hono.get('/contact', (c) => {
 
 // ─── REST API ─────────────────────────────────────────────────────────────────
 
-// List
+// List (public)
 hono.get('/api/trips', async (c) => {
   const kv = (c.env as Env)?.DIARY_KV
   const entries = await getEntries(kv)
   return c.json({ entries })
 })
 
-// Get one
+// Get one (public)
 hono.get('/api/trips/:id', async (c) => {
   const kv = (c.env as Env)?.DIARY_KV
   const entry = await getEntry(kv, c.req.param('id'))
@@ -786,8 +1054,10 @@ hono.get('/api/trips/:id', async (c) => {
   return c.json({ entry })
 })
 
-// Create
+// Create (protected)
 hono.post('/api/trips', async (c) => {
+  const token = extractToken(c.req.raw)
+  if (!verifyToken(token)) return c.json({ error: 'Unauthorized' }, 401)
   const kv = (c.env as Env)?.DIARY_KV
   const b = await c.req.json<Partial<Entry>>()
   const now = new Date().toISOString()
@@ -807,8 +1077,10 @@ hono.post('/api/trips', async (c) => {
   return c.json({ entry }, 201)
 })
 
-// Update
+// Update (protected)
 hono.put('/api/trips/:id', async (c) => {
+  const token = extractToken(c.req.raw)
+  if (!verifyToken(token)) return c.json({ error: 'Unauthorized' }, 401)
   const kv = (c.env as Env)?.DIARY_KV
   const old = await getEntry(kv, c.req.param('id'))
   if (!old) return c.json({ error: 'not found' }, 404)
@@ -818,8 +1090,10 @@ hono.put('/api/trips/:id', async (c) => {
   return c.json({ entry })
 })
 
-// Delete
+// Delete (protected)
 hono.delete('/api/trips/:id', async (c) => {
+  const token = extractToken(c.req.raw)
+  if (!verifyToken(token)) return c.json({ error: 'Unauthorized' }, 401)
   const kv = (c.env as Env)?.DIARY_KV
   await delEntry(kv, c.req.param('id'))
   return c.json({ ok: true })
