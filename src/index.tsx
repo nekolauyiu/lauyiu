@@ -662,9 +662,17 @@ async function getEntries(kv: KVNamespace | undefined): Promise<Entry[]> {
       const v = await kv.get(k.name)
       if (v) all.push(JSON.parse(v))
     }
-    return all.sort((a, b) => (b.createdAt || b.date).localeCompare(a.createdAt || a.date))
+    return all.sort((a, b) => {
+      if (a.pinned && !b.pinned) return -1
+      if (!a.pinned && b.pinned) return 1
+      return (b.createdAt || b.date).localeCompare(a.createdAt || a.date)
+    })
   }
-  return Object.values(memStore).sort((a, b) => (b.createdAt || b.date).localeCompare(a.createdAt || a.date))
+  return Object.values(memStore).sort((a, b) => {
+    if (a.pinned && !b.pinned) return -1
+    if (!a.pinned && b.pinned) return 1
+    return (b.createdAt || b.date).localeCompare(a.createdAt || a.date)
+  })
 }
 
 async function getEntry(kv: KVNamespace | undefined, id: string): Promise<Entry | null> {
