@@ -150,6 +150,9 @@ function shell(title: string, active: string, body: string, script = '') {
       padding: 28px 30px;
       margin-bottom: 16px;
       transition: transform .25s, box-shadow .25s;
+      max-width: 66.67%;
+      word-break: break-word;
+      overflow-wrap: break-word;
     }
     .card:hover { transform: translateY(-2px); box-shadow: 0 8px 28px rgba(61,43,36,.09); }
     .card-click { cursor: pointer; }
@@ -173,6 +176,8 @@ function shell(title: string, active: string, body: string, script = '') {
       display: -webkit-box;
       -webkit-line-clamp: 2;
       -webkit-box-orient: vertical;
+      word-break: break-word;
+      overflow-wrap: break-word;
     }
     .tc-foot {
       display: flex; align-items: center;
