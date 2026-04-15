@@ -289,9 +289,7 @@ function shell(title: string, active: string, body: string, script = '') {
       width: 340px; max-width: 92vw;
     }
     .auth-box .auth-hint {
-      font-size: 11px; color: ${TEXT_M};
-      margin-bottom: 20px; line-height: 1.8;
-      font-family: 'ZoomlaXiangsu', serif;
+      display: none;
     }
     .auth-err {
       font-size: 8px; color: #b04040;
@@ -301,8 +299,8 @@ function shell(title: string, active: string, body: string, script = '') {
     }
     /* admin panel link */
     .admin-link {
-      font-size: 12px;
-      font-family: 'ZoomlaXiangsu', serif;
+      font-size: 8px;
+      font-family: 'Press Start 2P', monospace;
       color: ${TEXT_M};
       opacity: .5;
       cursor: pointer;
@@ -486,7 +484,7 @@ function shell(title: string, active: string, body: string, script = '') {
       <button class="btn btn-s" onclick="closeAuth()">CANCEL</button>
     </div>
     <div class="auth-err" id="authErr">密码错误，请重试</div>
-    <span class="admin-link" id="changePwdLink" onclick="switchToChangePwd()">修改密码</span>
+    <span class="admin-link" id="changePwdLink" onclick="switchToChangePwd()">Modify.</span>
   </div>
 </div>
 
@@ -532,7 +530,7 @@ function shell(title: string, active: string, body: string, script = '') {
   function openLogin(){
     _authMode='login';
     document.getElementById('authTitle').textContent='UNLOCK';
-    document.getElementById('authHint').textContent='输入管理员密码以解锁编辑功能';
+    document.getElementById('authHint').textContent='';
     document.getElementById('authLabel').textContent='PASSWORD';
     document.getElementById('authPwd').value='';
     document.getElementById('authErr').style.display='none';
@@ -546,7 +544,7 @@ function shell(title: string, active: string, body: string, script = '') {
   function switchToChangePwd(){
     _authMode='changepwd';
     document.getElementById('authTitle').textContent='CHANGE PWD';
-    document.getElementById('authHint').textContent='输入旧密码及新密码';
+    document.getElementById('authHint').textContent='';
     document.getElementById('authLabel').textContent='OLD PASSWORD';
     document.getElementById('authPwd').value='';
     document.getElementById('authErr').style.display='none';
