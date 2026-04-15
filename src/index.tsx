@@ -511,7 +511,7 @@ function shell(title: string, active: string, body: string, script = '') {
   }
 
   // ── Auth state ──
-  let _token = sessionStorage.getItem('neko_token') || '';
+  let _token = localStorage.getItem('neko_token') || '';
   let _authMode = 'login'; // 'login' | 'changepwd'
 
   function isAuthed(){ return !!_token; }
@@ -535,7 +535,7 @@ function shell(title: string, active: string, body: string, script = '') {
   document.getElementById('nekoBtn').addEventListener('click', function(){
     if(isAuthed()){
       // already logged in → logout
-      _token=''; sessionStorage.removeItem('neko_token');
+      _token=''; localStorage.removeItem('neko_token');
       applyAuthUI();
       load();
       showToast('已退出登录');
@@ -593,7 +593,7 @@ function shell(title: string, active: string, body: string, script = '') {
       if(r.ok){
         const d = await r.json();
         _token = d.token;
-        sessionStorage.setItem('neko_token', _token);
+        localStorage.setItem('neko_token', _token);
         closeAuth();
         applyAuthUI();
         load();
@@ -616,7 +616,7 @@ function shell(title: string, active: string, body: string, script = '') {
       if(r.ok){
         closeAuth();
         // force re-login with new password
-        _token=''; sessionStorage.removeItem('neko_token');
+        _token=''; localStorage.removeItem('neko_token');
         applyAuthUI();
         showToast('密码已修改，请重新登录');
       } else {
@@ -1052,7 +1052,7 @@ hono.get('/', (c) => {
         body:JSON.stringify(body)
       });
       if(r.ok){ closeEdit(); showToast(id?'UPDATED ✓':'SAVED ✓'); load(); }
-      else if(r.status===401){ showToast('登录已过期，请重新解锁'); _token=''; sessionStorage.removeItem('neko_token'); applyAuthUI(); }
+      else if(r.status===401){ showToast('登录已过期，请重新解锁'); _token=''; localStorage.removeItem('neko_token'); applyAuthUI(); }
       else { showToast('保存失败'); }
     }
 
