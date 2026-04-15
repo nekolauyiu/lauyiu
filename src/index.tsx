@@ -472,11 +472,11 @@ function shell(title: string, active: string, body: string, script = '') {
     <div id="authNewPwdWrap" style="display:none">
       <div class="fg">
         <label>NEW PASSWORD</label>
-        <input type="password" id="authNewPwd" placeholder="新密码">
+        <input type="password" id="authNewPwd" placeholder="New password">
       </div>
       <div class="fg">
         <label>CONFIRM</label>
-        <input type="password" id="authNewPwd2" placeholder="再次输入新密码">
+        <input type="password" id="authNewPwd2" placeholder="Enter the new password again">
       </div>
     </div>
     <div class="btn-row" style="margin-top:18px">
@@ -812,7 +812,8 @@ hono.get('/', (c) => {
     const mo=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
     const nd=new Date();
     document.getElementById('ds').textContent=mo[nd.getMonth()]+' '+nd.getDate()+', '+nd.getFullYear();
-    document.getElementById('edate').value=nd.toISOString().slice(0,10);
+    const _pad=n=>String(n).padStart(2,'0');
+    document.getElementById('edate').value=nd.getFullYear()+'-'+_pad(nd.getMonth()+1)+'-'+_pad(nd.getDate());
 
     let cid=null;
     load();
@@ -882,7 +883,7 @@ hono.get('/', (c) => {
       document.getElementById('eid').value='';
       document.getElementById('econtent').value='';
       document.getElementById('elinks').innerHTML='';
-      document.getElementById('edate').value=new Date().toISOString().slice(0,10);
+      const _td=new Date(); document.getElementById('edate').value=_td.getFullYear()+'-'+String(_td.getMonth()+1).padStart(2,'0')+'-'+String(_td.getDate()).padStart(2,'0');
       document.getElementById('editTitle').textContent='NEW ENTRY';
       imgData=[];
       renderImgPreview();
