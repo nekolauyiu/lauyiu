@@ -520,8 +520,6 @@ function shell(title: string, active: string, body: string, script = '') {
     const delBtn  = document.getElementById('viewDelBtn');
     if(editBtn) editBtn.style.display = isAuthed() ? '' : 'none';
     if(delBtn)  delBtn.style.display  = isAuthed() ? '' : 'none';
-    // refresh card list so inline EDIT buttons appear/disappear
-    load();
   }
 
   // ── Click neko → open auth modal ──
@@ -530,6 +528,7 @@ function shell(title: string, active: string, body: string, script = '') {
       // already logged in → logout
       _token=''; sessionStorage.removeItem('neko_token');
       applyAuthUI();
+      load();
       showToast('已退出登录');
     } else {
       openLogin();
@@ -588,6 +587,7 @@ function shell(title: string, active: string, body: string, script = '') {
         sessionStorage.setItem('neko_token', _token);
         closeAuth();
         applyAuthUI();
+        load();
         showToast('已解锁 🔓');
       } else {
         document.getElementById('authErr').textContent='密码错误，请重试';
@@ -844,10 +844,15 @@ hono.get('/', (c) => {
           <div class="tc-body">\${e.content.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>
           <div class="tc-foot">
             \${(e.tags||[]).map(t=>'<span class="pill">'+t+'</span>').join('')}
-            \${isAuthed()?'<button class="btn btn-p card-edit-btn" style="font-size:6px;padding:5px 10px;margin-left:auto" onclick="event.stopPropagation();cid=\''+e.id+'\';editCurrent()">EDIT</button>':''}
+            \${isAuthed()?' <button class="btn btn-p card-edit-btn" style="font-size:6px;padding:5px 10px;margin-left:auto" data-eid="\${e.id}" onclick="event.stopPropagation();cardEdit(this)">EDIT</button>':''}
           </div>
         </div>
       \`).join('');
+    }
+
+    function cardEdit(btn){
+      cid = btn.getAttribute('data-eid');
+      editCurrent();
     }
 
     // image store for current edit session
