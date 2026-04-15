@@ -400,6 +400,47 @@ function shell(title: string, active: string, body: string, script = '') {
       border: 1px solid rgba(255,255,255,.5);
     }
     .img-grid img:hover { transform: scale(1.04); box-shadow: 0 6px 18px rgba(61,43,36,.15); }
+    /* ── Image carousel (view modal, >2 images) ── */
+    .img-carousel {
+      position: relative;
+      margin-top: 14px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .img-carousel-track {
+      display: flex;
+      gap: 9px;
+      overflow: hidden;
+      flex: 1;
+      scroll-behavior: smooth;
+    }
+    .img-carousel-track img {
+      flex: 0 0 calc(33.333% - 6px);
+      aspect-ratio: 4/3;
+      object-fit: cover;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: transform .2s, box-shadow .2s;
+      border: 1px solid rgba(255,255,255,.5);
+    }
+    .img-carousel-track img:hover { transform: scale(1.04); box-shadow: 0 6px 18px rgba(61,43,36,.15); }
+    .carousel-btn {
+      flex: 0 0 32px;
+      width: 32px; height: 32px;
+      border-radius: 50%;
+      border: none;
+      background: ${ACCENT};
+      color: #fff;
+      font-size: 15px;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 3px 10px rgba(160,112,96,.35);
+      transition: background .2s, transform .2s;
+      flex-shrink: 0;
+    }
+    .carousel-btn:hover { background: ${TEXT_D}; transform: scale(1.08); }
+    .carousel-btn:disabled { opacity: .35; cursor: default; transform: none; }
     /* ── Link list ── */
     .link-list { display: flex; flex-direction: column; gap: 8px; margin-top: 14px; }
     .link-item {
@@ -815,7 +856,7 @@ hono.get('/', (c) => {
         <hr class="div">
         <div class="det-body" id="vcontent"></div>
         <div id="vtags" style="margin-top:14px;display:flex;gap:8px;flex-wrap:wrap"></div>
-        <div id="vimages" class="img-grid"></div>
+        <div id="vimages"></div>
         <div id="vlinks" class="link-list"></div>
         <hr class="div">
         <div class="btn-row">
@@ -945,9 +986,42 @@ hono.get('/', (c) => {
       document.getElementById('vcontent').textContent=e.content;
       document.getElementById('vtags').innerHTML=(e.tags||[]).map(t=>'<span class="pill">'+t+'</span>').join('');
       const imgs=e.images||[];
-      document.getElementById('vimages').innerHTML=imgs.map(u=>
-        '<img src="'+u+'" alt="" loading="lazy" onclick="openLb(this.src)">'
-      ).join('');
+      const vimEl=document.getElementById('vimages');
+      if(imgs.length>2){
+        // carousel mode
+        let _ci=0;
+        const perPage=3;
+        const total=imgs.length;
+        function _carouselRender(){
+          const track=vimEl.querySelector('.img-carousel-track');
+          const btnL=vimEl.querySelector('.carousel-btn.cl');
+          const btnR=vimEl.querySelector('.carousel-btn.cr');
+          if(!track) return;
+          track.innerHTML=imgs.slice(_ci,_ci+perPage).map(u=>
+            '<img src="'+u+'" alt="" loading="lazy" onclick="openLb(this.src)">'
+          ).join('');
+          btnL.disabled=(_ci===0);
+          btnR.disabled=(_ci+perPage>=total);
+        }
+        vimEl.innerHTML=
+          '<div class="img-carousel">'+
+          '<button class="carousel-btn cl" onclick="this.closest(\'.img-carousel\').dataset.ci=(+this.closest(\'.img-carousel\').dataset.ci||0);this.parentNode._step(-1)">&#8592;</button>'+
+          '<div class="img-carousel-track"></div>'+
+          '<button class="carousel-btn cr" onclick="this.parentNode._step(1)">&#8594;</button>'+
+          '</div>';
+        const carousel=vimEl.querySelector('.img-carousel');
+        carousel._step=function(dir){
+          _ci=Math.max(0,Math.min(_ci+dir,total-perPage));
+          _carouselRender();
+        };
+        _carouselRender();
+      } else {
+        // grid mode (≤2 images)
+        vimEl.className='img-grid';
+        vimEl.innerHTML=imgs.map(u=>
+          '<img src="'+u+'" alt="" loading="lazy" onclick="openLb(this.src)">'
+        ).join('');
+      }
       const lks=e.links||[];
       document.getElementById('vlinks').innerHTML=lks.map(l=>
         '<a class="link-item" href="'+l.url+'" target="_blank" rel="noopener noreferrer">'+
