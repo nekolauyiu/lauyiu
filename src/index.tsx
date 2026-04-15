@@ -291,6 +291,7 @@ function shell(title: string, active: string, body: string, script = '') {
     .auth-box .auth-hint {
       font-size: 11px; color: ${TEXT_M};
       margin-bottom: 20px; line-height: 1.8;
+      font-family: 'ZoomlaXiangsu', serif;
     }
     .auth-err {
       font-size: 8px; color: #b04040;
@@ -298,20 +299,10 @@ function shell(title: string, active: string, body: string, script = '') {
       margin-top: 12px; display: none;
       line-height: 1.8;
     }
-    /* lock badge on neko */
-    .neko-lock {
-      display: block;
-      font-size: 9px;
-      color: ${ACCENT};
-      opacity: .5;
-      margin-top: 6px;
-      font-family: 'Press Start 2P', monospace;
-      letter-spacing: .5px;
-    }
     /* admin panel link */
     .admin-link {
-      font-size: 7px;
-      font-family: 'Press Start 2P', monospace;
+      font-size: 12px;
+      font-family: 'ZoomlaXiangsu', serif;
       color: ${TEXT_M};
       opacity: .5;
       cursor: pointer;
@@ -452,7 +443,7 @@ function shell(title: string, active: string, body: string, script = '') {
   <nav class="sidebar">
     <div class="sb-brand">
       <h1 id="nekoBtn" title="管理员入口">neko</h1>
-      <span class="neko-lock" id="lockBadge">🔒</span>
+
     </div>
     <div class="sb-nav">
       <a class="sb-link ${active==='diary'?'on':''}" href="/">Diary</a>
@@ -515,12 +506,10 @@ function shell(title: string, active: string, body: string, script = '') {
 
   function applyAuthUI(){
     const fab = document.getElementById('fabBtn');
-    const lock = document.getElementById('lockBadge');
     if(fab){
       if(isAuthed()){ fab.classList.remove('hidden'); }
       else { fab.classList.add('hidden'); }
     }
-    if(lock){ lock.textContent = isAuthed() ? '🔓' : '🔒'; }
     // hide edit/delete buttons in view modal when not authed
     const editBtn = document.getElementById('viewEditBtn');
     const delBtn  = document.getElementById('viewDelBtn');
