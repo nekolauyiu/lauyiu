@@ -552,6 +552,14 @@ function shell(title: string, active: string, body: string, script = '') {
   }
 
   // ── Auth state ──
+  // check token expiry on load
+  (function(){
+    const exp = parseInt(localStorage.getItem('neko_token_exp')||'0');
+    if(exp && Date.now() > exp){
+      localStorage.removeItem('neko_token');
+      localStorage.removeItem('neko_token_exp');
+    }
+  })();
   let _token = localStorage.getItem('neko_token') || '';
   let _authMode = 'login'; // 'login' | 'changepwd'
 
@@ -631,6 +639,8 @@ function shell(title: string, active: string, body: string, script = '') {
         const d = await r.json();
         _token = d.token;
         localStorage.setItem('neko_token', _token);
+        localStorage.setItem('neko_token_exp', String(Date.now() + 60*60*1000));
+        setTimeout(function(){ _token=''; localStorage.removeItem('neko_token'); localStorage.removeItem('neko_token_exp'); applyAuthUI(); showToast('登录已过期，请重新解锁'); }, 60*60*1000);
         closeAuth();
         applyAuthUI();
         load();
@@ -774,8 +784,8 @@ hono.post('/api/auth', async (c) => {
   }
   const token = generateToken()
   tokenStore.add(token)
-  // expire token after 12 hours
-  setTimeout(() => tokenStore.delete(token), 12 * 60 * 60 * 1000)
+  // expire token after 60 minutes
+  setTimeout(() => tokenStore.delete(token), 60 * 60 * 1000)
   return c.json({ token })
 })
 
