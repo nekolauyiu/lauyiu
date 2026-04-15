@@ -987,40 +987,48 @@ hono.get('/', (c) => {
       document.getElementById('vtags').innerHTML=(e.tags||[]).map(t=>'<span class="pill">'+t+'</span>').join('');
       const imgs=e.images||[];
       const vimEl=document.getElementById('vimages');
+      vimEl.className='';
+      vimEl.innerHTML='';
       if(imgs.length>2){
-        // carousel mode
         let _ci=0;
         const perPage=3;
         const total=imgs.length;
+        const wrapper=document.createElement('div');
+        wrapper.className='img-carousel';
+        const btnL=document.createElement('button');
+        btnL.className='carousel-btn cl';
+        btnL.innerHTML='&#8592;';
+        const track=document.createElement('div');
+        track.className='img-carousel-track';
+        const btnR=document.createElement('button');
+        btnR.className='carousel-btn cr';
+        btnR.innerHTML='&#8594;';
+        wrapper.appendChild(btnL);
+        wrapper.appendChild(track);
+        wrapper.appendChild(btnR);
+        vimEl.appendChild(wrapper);
         function _carouselRender(){
-          const track=vimEl.querySelector('.img-carousel-track');
-          const btnL=vimEl.querySelector('.carousel-btn.cl');
-          const btnR=vimEl.querySelector('.carousel-btn.cr');
-          if(!track) return;
-          track.innerHTML=imgs.slice(_ci,_ci+perPage).map(u=>
-            '<img src="'+u+'" alt="" loading="lazy" onclick="openLb(this.src)">'
-          ).join('');
+          track.innerHTML='';
+          imgs.slice(_ci,_ci+perPage).forEach(function(u){
+            const img=document.createElement('img');
+            img.src=u; img.alt=''; img.loading='lazy';
+            img.onclick=function(){ openLb(u); };
+            track.appendChild(img);
+          });
           btnL.disabled=(_ci===0);
           btnR.disabled=(_ci+perPage>=total);
         }
-        vimEl.innerHTML=
-          '<div class="img-carousel">'+
-          '<button class="carousel-btn cl" onclick="this.closest(\'.img-carousel\').dataset.ci=(+this.closest(\'.img-carousel\').dataset.ci||0);this.parentNode._step(-1)">&#8592;</button>'+
-          '<div class="img-carousel-track"></div>'+
-          '<button class="carousel-btn cr" onclick="this.parentNode._step(1)">&#8594;</button>'+
-          '</div>';
-        const carousel=vimEl.querySelector('.img-carousel');
-        carousel._step=function(dir){
-          _ci=Math.max(0,Math.min(_ci+dir,total-perPage));
-          _carouselRender();
-        };
+        btnL.onclick=function(){ _ci=Math.max(0,_ci-1); _carouselRender(); };
+        btnR.onclick=function(){ _ci=Math.min(_ci+1,total-perPage); _carouselRender(); };
         _carouselRender();
       } else {
-        // grid mode (≤2 images)
         vimEl.className='img-grid';
-        vimEl.innerHTML=imgs.map(u=>
-          '<img src="'+u+'" alt="" loading="lazy" onclick="openLb(this.src)">'
-        ).join('');
+        imgs.forEach(function(u){
+          const img=document.createElement('img');
+          img.src=u; img.alt=''; img.loading='lazy';
+          img.onclick=function(){ openLb(u); };
+          vimEl.appendChild(img);
+        });
       }
       const lks=e.links||[];
       document.getElementById('vlinks').innerHTML=lks.map(l=>
