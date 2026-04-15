@@ -844,15 +844,9 @@ hono.get('/', (c) => {
           <div class="tc-body">\${e.content.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>
           <div class="tc-foot">
             \${(e.tags||[]).map(t=>'<span class="pill">'+t+'</span>').join('')}
-            \${isAuthed()?' <button class="btn btn-p card-edit-btn" style="font-size:6px;padding:5px 10px;margin-left:auto" data-eid="\${e.id}" onclick="event.stopPropagation();cardEdit(this)">EDIT</button>':''}
           </div>
         </div>
       \`).join('');
-    }
-
-    function cardEdit(btn){
-      cid = btn.getAttribute('data-eid');
-      editCurrent();
     }
 
     // image store for current edit session
