@@ -517,11 +517,7 @@ function shell(title: string, active: string, body: string, script = '') {
   function isAuthed(){ return !!_token; }
 
   function applyAuthUI(){
-    const fab = document.getElementById('fabBtn');
-    if(fab){
-      if(isAuthed()){ fab.classList.remove('hidden'); }
-      else { fab.classList.add('hidden'); }
-    }
+    // FAB always visible regardless of auth state
     // hide edit/delete buttons in view modal when not authed
     const editBtn = document.getElementById('viewEditBtn');
     const delBtn  = document.getElementById('viewDelBtn');
@@ -767,7 +763,7 @@ hono.get('/', (c) => {
       <div class="ph-sub" id="ds"></div>
     </div>
     <div id="list"><div class="empty"><div class="ei">📖</div><p>加载中…</p></div></div>
-    <button class="fab hidden" id="fabBtn" title="New Entry">+</button>
+    <button class="fab" id="fabBtn" title="New Entry">+</button>
 
     <!-- New / Edit modal -->
     <div class="ov" id="editOv">
@@ -903,7 +899,7 @@ hono.get('/', (c) => {
 
     // open new entry
     document.getElementById('fabBtn').onclick=()=>{
-      if(!isAuthed()){ showToast('请先解锁'); return; }
+      if(!isAuthed()){ openLogin(); return; }
       document.getElementById('eid').value='';
       document.getElementById('econtent').value='';
       document.getElementById('elinks').innerHTML='';
