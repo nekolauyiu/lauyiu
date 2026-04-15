@@ -842,7 +842,6 @@ hono.get('/', (c) => {
           <div class="tc-body">\${e.content.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>
           <div class="tc-foot">
             \${(e.tags||[]).map(t=>'<span class="pill">'+t+'</span>').join('')}
-            <span class="tc-time">\${(e.updatedAt||'').slice(0,10)}</span>
           </div>
         </div>
       \`).join('');
