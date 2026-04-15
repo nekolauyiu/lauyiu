@@ -484,7 +484,7 @@ function shell(title: string, active: string, body: string, script = '') {
       <button class="btn btn-s" onclick="closeAuth()">CANCEL</button>
     </div>
     <div class="auth-err" id="authErr">密码错误，请重试</div>
-    <span class="admin-link" id="changePwdLink" onclick="switchToChangePwd()">Modify.</span>
+    <span class="admin-link" id="changePwdLink" onclick="switchToChangePwd()">Modify</span>
   </div>
 </div>
 
@@ -831,7 +831,7 @@ hono.get('/', (c) => {
       }
       el.innerHTML=list.map(e=>\`
         <div class="card card-click" onclick="view('\${e.id}')">
-          <div class="tc-date">\${e.date}</div>
+          <div class="tc-date">\${mo[nd.getMonth()]+' '+nd.getDate()+', '+nd.getFullYear()}</div>
           <div class="tc-title">\${e.emoji} \${e.title}</div>
           <div class="tc-body">\${e.content.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>
           <div class="tc-foot">
