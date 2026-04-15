@@ -520,6 +520,8 @@ function shell(title: string, active: string, body: string, script = '') {
     const delBtn  = document.getElementById('viewDelBtn');
     if(editBtn) editBtn.style.display = isAuthed() ? '' : 'none';
     if(delBtn)  delBtn.style.display  = isAuthed() ? '' : 'none';
+    // refresh card list so inline EDIT buttons appear/disappear
+    load();
   }
 
   // ── Click neko → open auth modal ──
@@ -842,6 +844,7 @@ hono.get('/', (c) => {
           <div class="tc-body">\${e.content.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>
           <div class="tc-foot">
             \${(e.tags||[]).map(t=>'<span class="pill">'+t+'</span>').join('')}
+            \${isAuthed()?'<button class="btn btn-p card-edit-btn" style="font-size:6px;padding:5px 10px;margin-left:auto" onclick="event.stopPropagation();cid=\''+e.id+'\';editCurrent()">EDIT</button>':''}
           </div>
         </div>
       \`).join('');
@@ -1004,11 +1007,9 @@ hono.get('/', (c) => {
       else { showToast('保存失败'); }
     }
 
-    // close on overlay
-    ['editOv','viewOv'].forEach(id=>{
-      document.getElementById(id).addEventListener('click',function(e){
-        if(e.target===this) this.classList.remove('show');
-      });
+    // viewOv: clicking outside closes it; editOv: only CANCEL closes it
+    document.getElementById('viewOv').addEventListener('click',function(e){
+      if(e.target===this) this.classList.remove('show');
     });
   `
   return c.html(shell('Diary', 'diary', body, script))
