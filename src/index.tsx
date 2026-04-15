@@ -518,8 +518,10 @@ function shell(title: string, active: string, body: string, script = '') {
     // hide edit/delete buttons in view modal when not authed
     const editBtn = document.getElementById('viewEditBtn');
     const delBtn  = document.getElementById('viewDelBtn');
+    const pinBtn  = document.getElementById('viewPinBtn');
     if(editBtn) editBtn.style.display = isAuthed() ? '' : 'none';
     if(delBtn)  delBtn.style.display  = isAuthed() ? '' : 'none';
+    if(pinBtn)  pinBtn.style.display  = isAuthed() ? '' : 'none';
   }
 
   // ── Click neko → open auth modal ──
@@ -807,6 +809,7 @@ hono.get('/', (c) => {
         <hr class="div">
         <div class="btn-row">
           <button class="btn btn-p" id="viewEditBtn" onclick="editCurrent()">EDIT</button>
+          <button class="btn btn-s" id="viewPinBtn" onclick="togglePin()" style="display:none">📌 PIN</button>
           <button class="btn btn-d" id="viewDelBtn" onclick="deleteCurrent()">DELETE</button>
           <button class="btn btn-s" onclick="closeView()">CLOSE</button>
         </div>
@@ -839,7 +842,7 @@ hono.get('/', (c) => {
       }
       el.innerHTML=list.map(e=>\`
         <div class="card card-click" onclick="view('\${e.id}')">
-          <div class="tc-date">\${mo[nd.getMonth()]+' '+nd.getDate()+', '+nd.getFullYear()}</div>
+          <div class="tc-date">\${mo[nd.getMonth()]+' '+nd.getDate()+', '+nd.getFullYear()}\${e.pinned?'<span style="color:#a07060;font-size:9px;margin-left:4px">📌</span>':''}</div>
           <div class="tc-title">\${e.emoji} \${e.title}</div>
           <div class="tc-body">\${e.content.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>
           <div class="tc-foot">
@@ -942,9 +945,41 @@ hono.get('/', (c) => {
         '<span class="link-url">'+l.url+'</span>'+
         '</a>'
       ).join('');
+      // update PIN button label
+      const pinBtn = document.getElementById('viewPinBtn');
+      if(pinBtn) pinBtn.textContent = e.pinned ? '📌 UNPIN' : '📌 PIN';
       document.getElementById('viewOv').classList.add('show');
       // apply auth UI for edit/delete buttons
       applyAuthUI();
+    }
+
+    async function togglePin(){
+      if(!isAuthed()){ showToast('请先解锁'); return; }
+      const r = await fetch('/api/trips/'+cid);
+      const d = await r.json();
+      if(!d.entry) return;
+      const isPinned = !!d.entry.pinned;
+      if(!isPinned){
+        const lr = await fetch('/api/trips');
+        const ld = await lr.json();
+        const pinCount = (ld.entries||[]).filter(function(e){return e.pinned;}).length;
+        if(pinCount >= 3){ showToast('最多只能置顶 3 条'); return; }
+      }
+      const pr = await fetch('/api/trips/'+cid+'/pin',{
+        method:'POST',
+        headers:{'Content-Type':'application/json','Authorization':'Bearer '+_token},
+        body:JSON.stringify({pinned:!isPinned})
+      });
+      if(pr.ok){
+        const newPinned = !isPinned;
+        const pinBtn = document.getElementById('viewPinBtn');
+        if(pinBtn) pinBtn.textContent = newPinned ? '📌 UNPIN' : '📌 PIN';
+        showToast(newPinned ? '已置顶 📌' : '已取消置顶');
+        load();
+      } else {
+        const errD = await pr.json().catch(function(){return {};});
+        showToast(errD.error === 'max 3 pins' ? '最多只能置顶 3 条' : '操作失败');
+      }
     }
 
     function editCurrent(){
@@ -1080,6 +1115,24 @@ hono.put('/api/trips/:id', async (c) => {
   const entry: Entry = { ...old, ...b, id: old.id, updatedAt: new Date().toISOString() }
   await putEntry(kv, entry)
   return c.json({ entry })
+})
+
+// Pin/Unpin (protected, max 3 pins)
+hono.post('/api/trips/:id/pin', async (c) => {
+  const token = extractToken(c.req.raw)
+  if (!verifyToken(token)) return c.json({ error: 'Unauthorized' }, 401)
+  const kv = (c.env as Env)?.DIARY_KV
+  const entry = await getEntry(kv, c.req.param('id'))
+  if (!entry) return c.json({ error: 'not found' }, 404)
+  const { pinned } = await c.req.json<{ pinned: boolean }>()
+  if (pinned) {
+    const all = await getEntries(kv)
+    const pinCount = all.filter(e => e.pinned && e.id !== entry.id).length
+    if (pinCount >= 3) return c.json({ error: 'max 3 pins' }, 400)
+  }
+  const updated: Entry = { ...entry, pinned, updatedAt: new Date().toISOString() }
+  await putEntry(kv, updated)
+  return c.json({ entry: updated })
 })
 
 // Delete (protected)
