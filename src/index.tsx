@@ -574,6 +574,15 @@ function shell(title: string, active: string, body: string, script = '') {
 
   function isAuthed(){ return !!_token; }
 
+  function handleAuthExpired(){
+    _token='';
+    localStorage.removeItem('neko_token');
+    localStorage.removeItem('neko_token_exp');
+    applyAuthUI();
+    load();
+    showToast('登录已过期，请重新解锁');
+  }
+
   function applyAuthUI(){
     // FAB always visible regardless of auth state
     // hide edit/delete buttons in view modal when not authed
@@ -685,8 +694,21 @@ function shell(title: string, active: string, body: string, script = '') {
 
   // Auth overlay: clicking outside does NOT close the dialog (only CANCEL button closes it)
 
-  // init UI on page load
+  // init UI on page load - verify token validity with server
   applyAuthUI();
+  (async function(){
+    if(_token){
+      try{
+        const vr=await fetch('/api/verify',{headers:{'Authorization':'Bearer '+_token}});
+        const vd=await vr.json();
+        if(!vd.ok){
+          // token expired on server, clear local state silently
+          _token=''; localStorage.removeItem('neko_token'); localStorage.removeItem('neko_token_exp');
+          applyAuthUI(); load();
+        }
+      }catch(e){ /* network error, keep token for now */ }
+    }
+  })();
 
   ${script}
 </script>
@@ -795,6 +817,14 @@ function extractToken(req: Request): string {
   const auth = req.headers.get('Authorization') || ''
   return auth.startsWith('Bearer ') ? auth.slice(7) : ''
 }
+
+// ── Token verify endpoint ──
+hono.get('/api/verify', async (c) => {
+  const kv = (c.env as Env)?.DIARY_KV
+  const token = extractToken(c.req.raw)
+  const ok = await verifyToken(kv, token)
+  return c.json({ ok })
+})
 
 // ── Auth endpoint ──
 hono.post('/api/auth', async (c) => {
@@ -1198,13 +1228,14 @@ hono.get('/', (c) => {
 
     async function deleteCurrent(){
       if(!isAuthed()){ showToast('请先解锁'); return; }
-      if(!cid||!confirm('DELETE THIS ENTRY?')) return;
+      if(!cid) return;
       const r=await fetch('/api/trips/'+cid,{
         method:'DELETE',
         headers:{'Authorization':'Bearer '+_token}
       });
       if(r.ok){ closeView(); showToast('DELETED'); load(); }
-      else { showToast('删除失败，请重新登录'); }
+      else if(r.status===401){ closeView(); handleAuthExpired(); }
+      else { showToast('删除失败'); }
     }
 
     async function saveEntry(){
@@ -1236,7 +1267,7 @@ hono.get('/', (c) => {
           body:JSON.stringify(body)
         });
         if(r.ok){ closeEdit(); showToast(id?'UPDATED ✓':'SAVED ✓'); load(); }
-        else if(r.status===401){ showToast('登录已过期，请重新解锁'); _token=''; localStorage.removeItem('neko_token'); applyAuthUI(); }
+        else if(r.status===401){ handleAuthExpired(); }
         else { showToast('保存失败'); }
       } finally {
         if(saveBtn){ saveBtn.textContent='SAVE'; saveBtn.disabled=false; }
