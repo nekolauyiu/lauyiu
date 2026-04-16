@@ -906,22 +906,76 @@ hono.get('/', (c) => {
 
     function render(list){
       const el=document.getElementById('list');
+      el.innerHTML='';
       if(!list.length){
-        el.innerHTML='<div class="empty"><div class="ei">✍️</div><p style="font-family:&#39;Press Start 2P&#39;,monospace;font-size:8px;line-height:2">NO ENTRIES YET</p></div>';
+        const emp=document.createElement('div');
+        emp.className='empty';
+        const emojiDiv=document.createElement('div');
+        emojiDiv.className='ei';
+        emojiDiv.textContent='✍️';
+        const msg=document.createElement('p');
+        msg.style.cssText="font-family:'Press Start 2P',monospace;font-size:8px;line-height:2";
+        msg.textContent='NO ENTRIES YET';
+        emp.appendChild(emojiDiv);
+        emp.appendChild(msg);
+        el.appendChild(emp);
         return;
       }
-      el.innerHTML=list.map(e=>\`
-        <div class="card card-click" onclick="view('\${e.id}')">
-          <div class="tc-date">\${mo[nd.getMonth()]+' '+nd.getDate()+', '+nd.getFullYear()}\${e.pinned?'<span style="color:#a07060;font-size:9px;margin-left:4px">📌</span>':''}</div>
-          <div class="tc-title">\${e.emoji} \${e.title}</div>
-          <div class="tc-body">\${e.content.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>
-          <div class="tc-foot">
-            \${(e.tags||[]).map(t=>'<span class="pill">'+t+'</span>').join('')}
-            \${(e.images&&e.images.length>0)?'<span class="tc-img-badge">🖼 '+e.images.length+'</span>':''}
-            \${isAuthed()?'<button class="btn btn-p card-edit-btn" style="font-size:6px;padding:5px 10px;margin-left:auto" onclick="event.stopPropagation();cid=\''+e.id+'\';editCurrent()">EDIT</button>':''}
-          </div>
-        </div>
-      \`).join('');
+      list.forEach(function(e){
+        const card=document.createElement('div');
+        card.className='card card-click';
+        card.addEventListener('click',function(){view(e.id);});
+
+        const dateDiv=document.createElement('div');
+        dateDiv.className='tc-date';
+        dateDiv.textContent=mo[nd.getMonth()]+' '+nd.getDate()+', '+nd.getFullYear();
+        if(e.pinned){
+          const pin=document.createElement('span');
+          pin.style.cssText='color:#a07060;font-size:9px;margin-left:4px';
+          pin.textContent='📌';
+          dateDiv.appendChild(pin);
+        }
+        card.appendChild(dateDiv);
+
+        const titleDiv=document.createElement('div');
+        titleDiv.className='tc-title';
+        titleDiv.textContent=(e.emoji||'')+' '+e.title;
+        card.appendChild(titleDiv);
+
+        const bodyDiv=document.createElement('div');
+        bodyDiv.className='tc-body';
+        bodyDiv.textContent=e.content;
+        card.appendChild(bodyDiv);
+
+        const foot=document.createElement('div');
+        foot.className='tc-foot';
+        (e.tags||[]).forEach(function(t){
+          const pill=document.createElement('span');
+          pill.className='pill';
+          pill.textContent=t;
+          foot.appendChild(pill);
+        });
+        if(e.images&&e.images.length>0){
+          const badge=document.createElement('span');
+          badge.className='tc-img-badge';
+          badge.textContent='🖼 '+e.images.length;
+          foot.appendChild(badge);
+        }
+        if(isAuthed()){
+          const editBtn=document.createElement('button');
+          editBtn.className='btn btn-p card-edit-btn';
+          editBtn.style.cssText='font-size:6px;padding:5px 10px;margin-left:auto';
+          editBtn.textContent='EDIT';
+          editBtn.addEventListener('click',function(ev){
+            ev.stopPropagation();
+            cid=e.id;
+            editCurrent();
+          });
+          foot.appendChild(editBtn);
+        }
+        card.appendChild(foot);
+        el.appendChild(card);
+      });
     }
 
     // image store for current edit session
