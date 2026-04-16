@@ -592,6 +592,12 @@ function shell(title: string, active: string, body: string, script = '') {
     if(editBtn) editBtn.style.display = isAuthed() ? '' : 'none';
     if(delBtn)  delBtn.style.display  = isAuthed() ? '' : 'none';
     if(pinBtn)  pinBtn.style.display  = isAuthed() ? '' : 'none';
+    // edit modal delete button: only show when editing existing entry
+    const editDelBtn = document.getElementById('editDelBtn');
+    if(editDelBtn){
+      const eid = document.getElementById('eid');
+      editDelBtn.style.display = (isAuthed() && eid && eid.value) ? '' : 'none';
+    }
   }
 
   // ── Click neko → open auth modal ──
@@ -890,6 +896,7 @@ hono.get('/', (c) => {
         <div class="btn-row" style="margin-top:22px">
           <button class="btn btn-p" onclick="saveEntry()">SAVE</button>
           <button class="btn btn-s" onclick="closeEdit()">CANCEL</button>
+          <button class="btn btn-d" id="editDelBtn" onclick="deleteCurrent()" style="margin-left:auto;display:none">DELETE</button>
         </div>
       </div>
     </div>
@@ -1081,6 +1088,7 @@ hono.get('/', (c) => {
       document.getElementById('editTitle').textContent='NEW ENTRY';
       imgData=[];
       renderImgPreview();
+      const _edb=document.getElementById('editDelBtn'); if(_edb) _edb.style.display='none';
       document.getElementById('editOv').classList.add('show');
     };
 
@@ -1223,6 +1231,7 @@ hono.get('/', (c) => {
         (e.links||[]).forEach(l=>addLinkRow(l.url));
         document.getElementById('editTitle').textContent='EDIT ENTRY';
         document.getElementById('editOv').classList.add('show');
+        applyAuthUI();
       });
     }
 
@@ -1233,8 +1242,8 @@ hono.get('/', (c) => {
         method:'DELETE',
         headers:{'Authorization':'Bearer '+_token}
       });
-      if(r.ok){ closeView(); showToast('DELETED'); load(); }
-      else if(r.status===401){ closeView(); handleAuthExpired(); }
+      if(r.ok){ closeView(); closeEdit(); showToast('DELETED'); load(); }
+      else if(r.status===401){ closeView(); closeEdit(); handleAuthExpired(); }
       else { showToast('删除失败'); }
     }
 
