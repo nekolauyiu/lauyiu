@@ -6,3 +6,7 @@ dist/
 .dev.vars
 *.bak
 *.tar.gz
+
+# OS crash dumps
+core
+core.*
