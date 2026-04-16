@@ -439,18 +439,22 @@ function shell(title: string, active: string, body: string, script = '') {
     }
     .img-carousel-track img:hover { transform: scale(1.04); box-shadow: 0 6px 18px rgba(61,43,36,.15); }
     .carousel-btn {
-      flex: 0 0 32px;
-      width: 32px; height: 32px;
+      flex: 0 0 36px;
+      width: 36px; height: 36px;
       border-radius: 50%;
       border: none;
       background: ${ACCENT};
       color: #fff;
-      font-size: 15px;
+      font-size: 16px;
       cursor: pointer;
       display: flex; align-items: center; justify-content: center;
       box-shadow: 0 3px 10px rgba(160,112,96,.35);
       transition: background .2s, transform .2s;
       flex-shrink: 0;
+      position: relative;
+      z-index: 2;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
     }
     .carousel-btn:hover { background: ${TEXT_D}; transform: scale(1.08); }
     .carousel-btn:disabled { opacity: .35; cursor: default; transform: none; }
@@ -1163,8 +1167,8 @@ hono.get('/', (c) => {
           btnL.disabled=(_ci===0);
           btnR.disabled=(_ci+perPage>=total);
         }
-        btnL.onclick=function(){ _ci=Math.max(0,_ci-1); _carouselRender(); };
-        btnR.onclick=function(){ _ci=Math.min(_ci+1,total-perPage); _carouselRender(); };
+        btnL.addEventListener('click',function(e){ e.stopPropagation(); _ci=Math.max(0,_ci-1); _carouselRender(); });
+        btnR.addEventListener('click',function(e){ e.stopPropagation(); _ci=Math.min(_ci+1,total-perPage); _carouselRender(); });
         _carouselRender();
       } else {
         vimEl.className='img-grid';
@@ -1287,10 +1291,7 @@ hono.get('/', (c) => {
       }
     }
 
-    // viewOv: clicking outside closes it; editOv: only CANCEL closes it
-    document.getElementById('viewOv').addEventListener('click',function(e){
-      if(e.target===this) this.classList.remove('show');
-    });
+    // All overlays: clicking outside does NOT close (must use buttons to close)
   `
   return c.html(shell('Diary', 'diary', body, script))
 })
