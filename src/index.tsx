@@ -360,7 +360,8 @@ function shell(title: string, active: string, body: string, script = '') {
       transform: translateX(-50%) translateY(70px);
       background: ${TEXT_D}; color: #fff;
       padding: 11px 26px; border-radius: 22px;
-      font-size: 13px; letter-spacing: .8px;
+      font-family: 'Press Start 2P', monospace;
+      font-size: 8px; letter-spacing: 1px;
       z-index: 999; opacity: 0;
       transition: all .35s;
     }
@@ -591,7 +592,7 @@ function shell(title: string, active: string, body: string, script = '') {
       _token=''; localStorage.removeItem('neko_token');
       applyAuthUI();
       load();
-      showToast('已退出登录');
+      showToast('Logout');
     } else {
       openLogin();
     }
@@ -1251,7 +1252,7 @@ hono.get('/contact', (c) => {
     <div style="font-size:13px;color:${TEXT_M};line-height:3;letter-spacing:.8px;font-family:'Times New Roman',Times,serif">
       <div><a href="https://www.nekolauyiu.com" target="_blank" style="color:${ACCENT};text-decoration:none">www.nekolauyiu.com</a></div>
       <div><a href="mailto:contact@nekolauyiu.com" style="color:${ACCENT};text-decoration:none">contact@nekolauyiu.com</a></div>
-      <div><a href="https://www.taxlema.com" target="_blank" style="color:${ACCENT};text-decoration:none">www.taxlema.com</a></div>
+
     </div>
   `
   return c.html(shell('Contact', 'contact', body))
