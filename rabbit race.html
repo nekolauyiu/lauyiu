@@ -1,0 +1,171 @@
+import React, { useState, useEffect, useRef } from "react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { motion } from "framer-motion";
+
+export default function RaceGame() {
+  const [turtleX, setTurtleX] = useState(0);
+  const [rabbitPos, setRabbitPos] = useState({ x: 0, y: 50 });
+  const [running, setRunning] = useState(false);
+  const [winner, setWinner] = useState(null);
+  const [story, setStory] = useState("从前，在一片像童话书一样的草地上...");
+  const [rabbitSleeping, setRabbitSleeping] = useState(false);
+
+  const audioRef = useRef(null);
+  const FINISH = 100;
+
+  useEffect(() => {
+    if (!running) return;
+
+    const interval = setInterval(() => {
+      // 🐢 乌龟稳定推进
+      setTurtleX((x) => {
+        const next = Math.min(x + 1.5, FINISH);
+
+        if (next > 20 && next < 40) setStory("乌龟慢慢前进，一步也不停...");
+        if (next > 40 && next < 70) setStory("兔子到处乱跑，还在玩耍 😅");
+        if (next > 70 && next < 95) setStory("乌龟快到终点了！坚持就是胜利...");
+
+        return next;
+      });
+
+      // 🐰 兔子行为（随机+睡觉）
+      setRabbitPos((pos) => {
+        if (Math.random() < 0.2) {
+          setRabbitSleeping(true);
+          setStory("兔子居然睡着了 💤");
+          return pos;
+        }
+
+        setRabbitSleeping(false);
+
+        const dx = (Math.random() - 0.5) * 10;
+        const dy = (Math.random() - 0.5) * 18;
+
+        let newX = pos.x + dx;
+        let newY = pos.y + dy;
+
+        newX = Math.max(0, Math.min(newX, 80));
+        newY = Math.max(5, Math.min(newY, 90));
+
+        return { x: newX, y: newY };
+      });
+    }, 400);
+
+    return () => clearInterval(interval);
+  }, [running]);
+
+  useEffect(() => {
+    if (turtleX >= FINISH) {
+      setWinner("乌龟赢了 🐢✨");
+      setStory("坚持不懈的乌龟赢得了比赛！");
+      setRunning(false);
+    }
+  }, [turtleX]);
+
+  const startGame = () => {
+    setTurtleX(0);
+    setRabbitPos({ x: 0, y: 50 });
+    setWinner(null);
+    setStory("比赛开始！兔子飞快冲出！");
+    setRunning(true);
+
+    if (audioRef.current) {
+      audioRef.current.currentTime = 0;
+      audioRef.current.play();
+    }
+  };
+
+  // 🎮 玩家控制
+  const moveRabbit = (dir) => {
+    if (!running) return;
+
+    setRabbitPos((pos) => {
+      let { x, y } = pos;
+      if (dir === "right") x += 6;
+      if (dir === "left") x -= 6;
+      if (dir === "up") y -= 6;
+      if (dir === "down") y += 6;
+
+      return {
+        x: Math.max(0, Math.min(x, 90)),
+        y: Math.max(0, Math.min(y, 90)),
+      };
+    });
+  };
+
+  return (
+    <div className="flex flex-col items-center gap-4 p-6">
+      <h1 className="text-3xl font-bold">🎮 龟兔赛跑 · 游戏升级版</h1>
+
+      {/* 🎵 8-bit游戏风音乐（任天堂风格） */}
+      <audio
+        ref={audioRef}
+        loop
+        src="https://cdn.pixabay.com/audio/2023/03/21/audio_5f9c8b7c61.mp3"
+      />
+
+      {/* 故事 */}
+      <div className="text-lg bg-yellow-100 px-4 py-2 rounded shadow">
+        {story}
+      </div>
+
+      <Card className="w-full max-w-xl shadow-xl">
+        <CardContent className="p-4">
+          <div className="relative w-full h-72 bg-gradient-to-b from-blue-200 via-green-200 to-green-100 rounded overflow-hidden">
+
+            {/* ☁️ 云（轻微动画） */}
+            <motion.div animate={{ x: [0, 20, 0] }} transition={{ repeat: Infinity, duration: 6 }} className="absolute top-5 left-10 text-2xl">☁️</motion.div>
+
+            {/* 🌳 树 */}
+            <div className="absolute left-10 bottom-10 text-3xl">🌳</div>
+            <div className="absolute left-40 bottom-20 text-3xl">🌳</div>
+
+            {/* 🏁 终点 */}
+            <div className="absolute right-0 top-0 h-full w-2 bg-red-500" />
+
+            {/* 🐢 乌龟 */}
+            <motion.div
+              className="absolute text-4xl"
+              animate={{ left: `${turtleX}%`, top: "75%" }}
+            >
+              🐢
+            </motion.div>
+
+            {/* 🐰 兔子 */}
+            <motion.div
+              className="absolute text-4xl"
+              animate={{ left: `${rabbitPos.x}%`, top: `${rabbitPos.y}%` }}
+            >
+              {rabbitSleeping ? "💤🐰" : "🐰"}
+            </motion.div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* 🎮 控制 */}
+      <div className="grid grid-cols-3 gap-2">
+        <div />
+        <Button onClick={() => moveRabbit("up")}>⬆️</Button>
+        <div />
+        <Button onClick={() => moveRabbit("left")}>⬅️</Button>
+        <Button onClick={() => moveRabbit("down")}>⬇️</Button>
+        <Button onClick={() => moveRabbit("right")}>➡️</Button>
+      </div>
+
+      <Button onClick={startGame} disabled={running}>
+        {running ? "比赛进行中..." : "开始游戏"}
+      </Button>
+
+      {winner && (
+        <div className="text-xl font-semibold text-green-700 animate-bounce">
+          {winner}
+        </div>
+      )}
+
+      <div className="text-sm text-gray-500 mt-4">
+        🚀 已具备发布能力：Vercel / Netlify 一键上线
+      </div>
+    </div>
+  );
+}
