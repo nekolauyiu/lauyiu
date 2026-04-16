@@ -765,16 +765,29 @@ async function getPassword(kv: KVNamespace | undefined): Promise<string> {
 }
 
 // ── Token store (in-memory, session-level) ──
-const tokenStore = new Set<string>()
-
 function generateToken(): string {
   const arr = new Uint8Array(24)
   crypto.getRandomValues(arr)
   return Array.from(arr).map(b => b.toString(16).padStart(2,'0')).join('')
 }
 
-function verifyToken(token: string): boolean {
-  return tokenStore.has(token)
+// ── Token stored in KV so all Worker instances share state ──
+async function createToken(kv: KVNamespace | undefined): Promise<string> {
+  const token = generateToken()
+  if (kv) {
+    // store token with 60-min TTL
+    await kv.put('token:' + token, '1', { expirationTtl: 3600 })
+  }
+  return token
+}
+
+async function verifyToken(kv: KVNamespace | undefined, token: string): Promise<boolean> {
+  if (!token) return false
+  if (kv) {
+    const val = await kv.get('token:' + token)
+    return val === '1'
+  }
+  return false
 }
 
 // ── Auth middleware helper ──
@@ -791,18 +804,15 @@ hono.post('/api/auth', async (c) => {
   if (password !== correctPwd) {
     return c.json({ error: 'Invalid password' }, 401)
   }
-  const token = generateToken()
-  tokenStore.add(token)
-  // expire token after 60 minutes
-  setTimeout(() => tokenStore.delete(token), 60 * 60 * 1000)
+  const token = await createToken(kv)
   return c.json({ token })
 })
 
 // ── Change password endpoint ──
 hono.post('/api/admin/password', async (c) => {
-  const token = extractToken(c.req.raw)
-  if (!verifyToken(token)) return c.json({ error: 'Unauthorized' }, 401)
   const kv = (c.env as Env)?.DIARY_KV
+  const token = extractToken(c.req.raw)
+  if (!await verifyToken(kv, token)) return c.json({ error: 'Unauthorized' }, 401)
   const { oldPassword, newPassword } = await c.req.json<{ oldPassword: string; newPassword: string }>()
   const correctPwd = await getPassword(kv)
   if (oldPassword !== correctPwd) return c.json({ error: '旧密码错误' }, 403)
@@ -810,8 +820,6 @@ hono.post('/api/admin/password', async (c) => {
   if (kv) {
     await kv.put('admin:password', newPassword)
   }
-  // invalidate all tokens
-  tokenStore.clear()
   return c.json({ ok: true })
 })
 
@@ -1277,9 +1285,9 @@ hono.get('/api/trips/:id', async (c) => {
 
 // Create (protected)
 hono.post('/api/trips', async (c) => {
-  const token = extractToken(c.req.raw)
-  if (!verifyToken(token)) return c.json({ error: 'Unauthorized' }, 401)
   const kv = (c.env as Env)?.DIARY_KV
+  const token = extractToken(c.req.raw)
+  if (!await verifyToken(kv, token)) return c.json({ error: 'Unauthorized' }, 401)
   const b = await c.req.json<Partial<Entry>>()
   const now = new Date().toISOString()
   const entry: Entry = {
@@ -1300,9 +1308,9 @@ hono.post('/api/trips', async (c) => {
 
 // Update (protected)
 hono.put('/api/trips/:id', async (c) => {
-  const token = extractToken(c.req.raw)
-  if (!verifyToken(token)) return c.json({ error: 'Unauthorized' }, 401)
   const kv = (c.env as Env)?.DIARY_KV
+  const token = extractToken(c.req.raw)
+  if (!await verifyToken(kv, token)) return c.json({ error: 'Unauthorized' }, 401)
   const old = await getEntry(kv, c.req.param('id'))
   if (!old) return c.json({ error: 'not found' }, 404)
   const b = await c.req.json<Partial<Entry>>()
@@ -1313,9 +1321,9 @@ hono.put('/api/trips/:id', async (c) => {
 
 // Pin/Unpin (protected, max 3 pins)
 hono.post('/api/trips/:id/pin', async (c) => {
-  const token = extractToken(c.req.raw)
-  if (!verifyToken(token)) return c.json({ error: 'Unauthorized' }, 401)
   const kv = (c.env as Env)?.DIARY_KV
+  const token = extractToken(c.req.raw)
+  if (!await verifyToken(kv, token)) return c.json({ error: 'Unauthorized' }, 401)
   const entry = await getEntry(kv, c.req.param('id'))
   if (!entry) return c.json({ error: 'not found' }, 404)
   const { pinned } = await c.req.json<{ pinned: boolean }>()
@@ -1331,9 +1339,9 @@ hono.post('/api/trips/:id/pin', async (c) => {
 
 // Delete (protected)
 hono.delete('/api/trips/:id', async (c) => {
-  const token = extractToken(c.req.raw)
-  if (!verifyToken(token)) return c.json({ error: 'Unauthorized' }, 401)
   const kv = (c.env as Env)?.DIARY_KV
+  const token = extractToken(c.req.raw)
+  if (!await verifyToken(kv, token)) return c.json({ error: 'Unauthorized' }, 401)
   await delEntry(kv, c.req.param('id'))
   return c.json({ ok: true })
 })
