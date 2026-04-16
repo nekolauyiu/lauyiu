@@ -196,6 +196,14 @@ function shell(title: string, active: string, body: string, script = '') {
       font-family: 'Press Start 2P', monospace;
       color: ${ACCENT}; opacity: .8;
     }
+    .tc-img-badge {
+      display: inline-flex; align-items: center; gap: 4px;
+      font-size: 10px; color: ${ACCENT}; opacity: .75;
+      background: rgba(160,112,96,.1);
+      border-radius: 20px;
+      padding: 2px 9px 2px 6px;
+      letter-spacing: .3px;
+    }
 
     /* ── Form ── */
     .fg { margin-bottom: 20px; }
@@ -909,6 +917,8 @@ hono.get('/', (c) => {
           <div class="tc-body">\${e.content.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>
           <div class="tc-foot">
             \${(e.tags||[]).map(t=>'<span class="pill">'+t+'</span>').join('')}
+            \${(e.images&&e.images.length>0)?'<span class="tc-img-badge">🖼 '+e.images.length+'</span>':''}
+            \${isAuthed()?'<button class="btn btn-p card-edit-btn" style="font-size:6px;padding:5px 10px;margin-left:auto" onclick="event.stopPropagation();cid=\''+e.id+'\';editCurrent()">EDIT</button>':''}
           </div>
         </div>
       \`).join('');
