@@ -401,12 +401,15 @@ function shell(title: string, active: string, body: string, script = '') {
       margin-top: 14px;
     }
     .img-grid img {
-      width: 100%; aspect-ratio: 4/3;
-      object-fit: cover;
+      width: 100%;
+      max-height: 340px;
+      object-fit: contain;
+      background: rgba(160,112,96,.06);
       border-radius: 10px;
       cursor: pointer;
       transition: transform .2s, box-shadow .2s;
       border: 1px solid rgba(255,255,255,.5);
+      display: block;
     }
     .img-grid img:hover { transform: scale(1.04); box-shadow: 0 6px 18px rgba(61,43,36,.15); }
     /* ── Image carousel (view modal, >2 images) ── */
@@ -426,8 +429,9 @@ function shell(title: string, active: string, body: string, script = '') {
     }
     .img-carousel-track img {
       flex: 0 0 calc(33.333% - 6px);
-      aspect-ratio: 4/3;
-      object-fit: cover;
+      max-height: 260px;
+      object-fit: contain;
+      background: rgba(160,112,96,.06);
       border-radius: 10px;
       cursor: pointer;
       transition: transform .2s, box-shadow .2s;
