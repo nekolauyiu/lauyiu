@@ -952,10 +952,31 @@ hono.get('/', (c) => {
     let cid=null;
     load();
 
+    let _cachedList=[];
+
     async function load(){
       const r=await fetch('/api/trips');
       const d=await r.json();
-      render(d.entries||[]);
+      _cachedList=d.entries||[];
+      render(_cachedList);
+    }
+
+    function addOrUpdateLocal(entry){
+      const idx=_cachedList.findIndex(e=>e.id===entry.id);
+      if(idx>=0){ _cachedList[idx]=entry; }
+      else { _cachedList.unshift(entry); }
+      // re-sort: pinned first, then by createdAt/date desc
+      _cachedList.sort(function(a,b){
+        if(a.pinned&&!b.pinned) return -1;
+        if(!a.pinned&&b.pinned) return 1;
+        return (b.createdAt||b.date).localeCompare(a.createdAt||a.date);
+      });
+      render(_cachedList);
+    }
+
+    function removeLocal(id){
+      _cachedList=_cachedList.filter(e=>e.id!==id);
+      render(_cachedList);
     }
 
     function render(list){
@@ -1250,7 +1271,7 @@ hono.get('/', (c) => {
         method:'DELETE',
         headers:{'Authorization':'Bearer '+_token}
       });
-      if(r.ok){ closeView(); closeEdit(); showToast('DELETED'); load(); }
+      if(r.ok){ closeView(); closeEdit(); showToast('DELETED'); removeLocal(cid); setTimeout(load,1500); }
       else if(r.status===401){ closeView(); closeEdit(); handleAuthExpired(); }
       else { showToast('删除失败'); }
     }
@@ -1283,7 +1304,14 @@ hono.get('/', (c) => {
           headers:{'Content-Type':'application/json','Authorization':'Bearer '+_token},
           body:JSON.stringify(body)
         });
-        if(r.ok){ closeEdit(); showToast(id?'UPDATED ✓':'SAVED ✓'); load(); }
+        if(r.ok){
+          const saved=await r.json();
+          closeEdit();
+          showToast(id?'UPDATED ✓':'SAVED ✓');
+          if(saved.entry) addOrUpdateLocal(saved.entry);
+          // background refresh to sync any KV eventual consistency
+          setTimeout(load, 1500);
+        }
         else if(r.status===401){ handleAuthExpired(); }
         else { showToast('保存失败'); }
       } finally {
