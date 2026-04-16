@@ -458,6 +458,7 @@ function shell(title: string, active: string, body: string, script = '') {
     }
     .carousel-btn:hover { background: ${TEXT_D}; transform: scale(1.08); }
     .carousel-btn:disabled { opacity: .35; cursor: default; transform: none; }
+    .carousel-counter { text-align:center; font-family:'Press Start 2P',monospace; font-size:7px; color:${TEXT_M}; margin-top:6px; letter-spacing:1px; }
     /* ── Link list ── */
     .link-list { display: flex; flex-direction: column; gap: 8px; margin-top: 14px; }
     .link-item {
@@ -1159,37 +1160,61 @@ hono.get('/', (c) => {
       const vimEl=document.getElementById('vimages');
       vimEl.className='';
       vimEl.innerHTML='';
-      if(imgs.length>2){
-        let _ci=0;
+      if(imgs.length>3){
+        // carousel: show 3 per page, advance by 3
         const perPage=3;
         const total=imgs.length;
+        let _page=0;
+        const totalPages=Math.ceil(total/perPage);
+
         const wrapper=document.createElement('div');
         wrapper.className='img-carousel';
+
         const btnL=document.createElement('button');
+        btnL.type='button';
         btnL.className='carousel-btn cl';
         btnL.innerHTML='&#8592;';
+
         const track=document.createElement('div');
         track.className='img-carousel-track';
+
         const btnR=document.createElement('button');
+        btnR.type='button';
         btnR.className='carousel-btn cr';
         btnR.innerHTML='&#8594;';
+
+        const counter=document.createElement('div');
+        counter.className='carousel-counter';
+
         wrapper.appendChild(btnL);
         wrapper.appendChild(track);
         wrapper.appendChild(btnR);
         vimEl.appendChild(wrapper);
+        vimEl.appendChild(counter);
+
         function _carouselRender(){
           track.innerHTML='';
-          imgs.slice(_ci,_ci+perPage).forEach(function(u){
+          const start=_page*perPage;
+          imgs.slice(start, start+perPage).forEach(function(u){
             const img=document.createElement('img');
             img.src=u; img.alt=''; img.loading='lazy';
-            img.onclick=function(){ openLb(u); };
+            img.onclick=function(ev){ ev.stopPropagation(); openLb(u); };
             track.appendChild(img);
           });
-          btnL.disabled=(_ci===0);
-          btnR.disabled=(_ci+perPage>=total);
+          btnL.disabled=(_page===0);
+          btnR.disabled=(_page>=totalPages-1);
+          counter.textContent=(_page+1)+' / '+totalPages;
         }
-        btnL.addEventListener('click',function(e){ e.stopPropagation(); _ci=Math.max(0,_ci-1); _carouselRender(); });
-        btnR.addEventListener('click',function(e){ e.stopPropagation(); _ci=Math.min(_ci+1,total-perPage); _carouselRender(); });
+
+        btnL.addEventListener('click',function(ev){
+          ev.preventDefault(); ev.stopPropagation();
+          if(_page>0){ _page--; _carouselRender(); }
+        });
+        btnR.addEventListener('click',function(ev){
+          ev.preventDefault(); ev.stopPropagation();
+          if(_page<totalPages-1){ _page++; _carouselRender(); }
+        });
+
         _carouselRender();
       } else {
         vimEl.className='img-grid';
