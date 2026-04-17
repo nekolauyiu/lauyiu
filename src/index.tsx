@@ -1009,9 +1009,12 @@ hono.get('/', (c) => {
     }
 
     function addOrUpdateLocal(entry){
+      // convert full entry to slim (no image data) for the list cache
+      const slim=Object.assign({},entry,{imageCount:(entry.images||[]).length,images:undefined});
+      delete slim.images;
       const idx=_cachedList.findIndex(e=>e.id===entry.id);
-      if(idx>=0){ _cachedList[idx]=entry; }
-      else { _cachedList.unshift(entry); }
+      if(idx>=0){ _cachedList[idx]=slim; }
+      else { _cachedList.unshift(slim); }
       // re-sort: pinned first, then by createdAt/date desc
       _cachedList.sort(function(a,b){
         if(a.pinned&&!b.pinned) return -1;
@@ -1077,10 +1080,11 @@ hono.get('/', (c) => {
           pill.textContent=t;
           foot.appendChild(pill);
         });
-        if(e.images&&e.images.length>0){
+        const imgCnt = e.imageCount || (e.images&&e.images.length) || 0;
+        if(imgCnt>0){
           const badge=document.createElement('span');
           badge.className='tc-img-badge';
-          badge.textContent='🖼 '+e.images.length;
+          badge.textContent='🖼 '+imgCnt;
           foot.appendChild(badge);
         }
         if(isAuthed()){
@@ -1457,11 +1461,17 @@ hono.get('/contact', (c) => {
 
 // ─── REST API ─────────────────────────────────────────────────────────────────
 
-// List (public)
+// List (public) — strip images to keep response small
 hono.get('/api/trips', async (c) => {
   const kv = (c.env as Env)?.DIARY_KV
   const entries = await getEntries(kv)
-  return c.json({ entries })
+  const slim = entries.map(e => ({
+    id: e.id, date: e.date, title: e.title, content: e.content,
+    emoji: e.emoji, tags: e.tags, links: e.links,
+    pinned: e.pinned, createdAt: e.createdAt, updatedAt: e.updatedAt,
+    imageCount: (e.images || []).length   // only send count, not data
+  }))
+  return c.json({ entries: slim })
 })
 
 // Get one (public)
