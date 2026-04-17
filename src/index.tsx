@@ -997,8 +997,6 @@ hono.get('/', (c) => {
     document.getElementById('edate').value=nd.getFullYear()+'-'+_pad(nd.getMonth()+1)+'-'+_pad(nd.getDate());
 
     let cid=null;
-    load();
-
     let _cachedList=[];
 
     async function load(){
@@ -1438,6 +1436,9 @@ hono.get('/', (c) => {
         if(saveBtn){ saveBtn.textContent='SAVE'; saveBtn.disabled=false; }
       }
     }
+
+    // initial load
+    load();
 
     // All overlays: clicking outside does NOT close (must use buttons to close)
   `
