@@ -68,4 +68,4 @@ npm run deploy
 
 ---
 
-@2026 lauyiu 劉瑤 · 把AI的交给AI 把人类的归还给人类
+@2026 lauyiu 劉瑤 · 
