@@ -167,13 +167,15 @@ function shell(title: string, active: string, body: string, script = '') {
       color: ${TEXT_M}; text-transform: uppercase;
     }
     .tc-title {
-      font-family: 'Press Start 2P', monospace;
-      font-size: 11px; color: ${TEXT_D};
+      font-family: 'Noto Serif SC', 'SimSun', serif;
+      font-size: 17px; color: ${TEXT_D};
+      font-weight: 600;
       margin: 7px 0 9px;
       line-height: 1.6;
     }
     .tc-body {
-      font-size: 13px; color: ${TEXT_M};
+      font-family: 'Noto Serif SC', 'SimSun', serif;
+      font-size: 12px; color: ${TEXT_M};
       line-height: 1.8;
       overflow: hidden;
       display: -webkit-box;
@@ -341,7 +343,8 @@ function shell(title: string, active: string, body: string, script = '') {
     }
     .det-emoji { font-size: 26px; }
     .det-body {
-      font-size: 14px; line-height: 2.1;
+      font-family: 'Noto Serif SC', 'SimSun', serif;
+      font-size: 13px; line-height: 2.0;
       color: ${TEXT_D}; white-space: pre-wrap;
       word-break: break-word;
       overflow-wrap: break-word;
@@ -971,7 +974,7 @@ hono.get('/', (c) => {
         <div class="det-head">
           <div>
             <div class="tc-date" id="vdate"></div>
-            <div style="font-family:'Press Start 2P',monospace;font-size:13px;color:${TEXT_D};margin-top:8px;line-height:1.7" id="vtitle"></div>
+            <div style="font-family:'Noto Serif SC','SimSun',serif;font-size:20px;font-weight:600;color:${TEXT_D};margin-top:8px;line-height:1.6" id="vtitle"></div>
           </div>
           <div class="det-emoji" id="vemoji"></div>
         </div>
