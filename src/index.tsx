@@ -12,7 +12,6 @@ const ACCENT   = '#a07060'
 
 // ─── Shared styles ────────────────────────────────────────────────────────────
 const BASE_CSS = `
-  @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Playfair+Display:ital,wght@0,400;0,600;1,400;1,600&family=Noto+Serif+SC:wght@300;400;500&display=swap');
   @font-face {
     font-family: 'ZoomlaXiangsu';
     src: url('/static/fonts/ZoomlaXiangsu.otf') format('opentype');
@@ -43,6 +42,10 @@ function shell(title: string, active: string, body: string, script = '') {
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="icon" type="image/png" href="/static/favicon.png">
   <title>${title} · neko</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Playfair+Display:ital,wght@0,400;0,600;1,400;1,600&family=Noto+Serif+SC:wght@300;400;500&display=swap" media="print" onload="this.media='all'">
+  <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Playfair+Display:ital,wght@0,400;0,600;1,400;1,600&family=Noto+Serif+SC:wght@300;400;500&display=swap"></noscript>
   <style>
     ${BASE_CSS}
 
@@ -775,11 +778,9 @@ const memStore: Record<string, Entry> = {}
 async function getEntries(kv: KVNamespace | undefined): Promise<Entry[]> {
   if (kv) {
     const list = await kv.list({ prefix: 'trip:' })
-    const all: Entry[] = []
-    for (const k of list.keys) {
-      const v = await kv.get(k.name)
-      if (v) all.push(JSON.parse(v))
-    }
+    // Parallel fetch all entries instead of sequential (N+1 → 2 round trips)
+    const values = await Promise.all(list.keys.map(k => kv.get(k.name)))
+    const all: Entry[] = values.filter(Boolean).map(v => JSON.parse(v!))
     return all.sort((a, b) => {
       if (a.pinned && !b.pinned) return -1
       if (!a.pinned && b.pinned) return 1
@@ -1000,10 +1001,14 @@ hono.get('/', (c) => {
     let _cachedList=[];
 
     async function load(){
-      const r=await fetch('/api/trips');
-      const d=await r.json();
-      _cachedList=d.entries||[];
-      render(_cachedList);
+      try{
+        const r=await fetch('/api/trips');
+        const d=await r.json();
+        _cachedList=d.entries||[];
+        render(_cachedList);
+      }catch(err){
+        // silently handle fetch errors
+      }
     }
 
     function addOrUpdateLocal(entry){
@@ -1029,6 +1034,7 @@ hono.get('/', (c) => {
 
     function render(list){
       const el=document.getElementById('list');
+      if(!el) return;
       el.innerHTML='';
       if(!list.length){
         const emp=document.createElement('div');
@@ -1329,16 +1335,9 @@ hono.get('/', (c) => {
 
     async function togglePin(){
       if(!isAuthed()){ showToast('请先解锁'); return; }
-      const r = await fetch('/api/trips/'+cid);
-      const d = await r.json();
-      if(!d.entry) return;
-      const isPinned = !!d.entry.pinned;
-      if(!isPinned){
-        const lr = await fetch('/api/trips');
-        const ld = await lr.json();
-        const pinCount = (ld.entries||[]).filter(function(e){return e.pinned;}).length;
-        if(pinCount >= 3){ showToast('最多只能置顶 3 条'); return; }
-      }
+      // Read current pin state from local cache (no extra API call needed)
+      const cached = _cachedList.find(function(e){ return e.id===cid; });
+      const isPinned = cached ? !!cached.pinned : false;
       const pr = await fetch('/api/trips/'+cid+'/pin',{
         method:'POST',
         headers:{'Content-Type':'application/json','Authorization':'Bearer '+_token},
@@ -1349,7 +1348,14 @@ hono.get('/', (c) => {
         const pinBtn = document.getElementById('viewPinBtn');
         if(pinBtn) pinBtn.textContent = newPinned ? '📌 UNPIN' : '📌 PIN';
         showToast(newPinned ? '已置顶 📌' : '已取消置顶');
-        load();
+        // Update local cache: toggle pinned, re-sort
+        if(cached){ cached.pinned = newPinned; }
+        _cachedList.sort(function(a,b){
+          if(a.pinned&&!b.pinned) return -1;
+          if(!a.pinned&&b.pinned) return 1;
+          return (b.createdAt||b.date).localeCompare(a.createdAt||a.date);
+        });
+        render(_cachedList);
       } else {
         const errD = await pr.json().catch(function(){return {};});
         showToast(errD.error === 'max 3 pins' ? '最多只能置顶 3 条' : '操作失败');
@@ -1383,7 +1389,7 @@ hono.get('/', (c) => {
         method:'DELETE',
         headers:{'Authorization':'Bearer '+_token}
       });
-      if(r.ok){ closeView(); closeEdit(); showToast('DELETED'); removeLocal(cid); setTimeout(load,1500); }
+      if(r.ok){ closeView(); closeEdit(); showToast('DELETED'); removeLocal(cid); }
       else if(r.status===401){ closeView(); closeEdit(); handleAuthExpired(); }
       else { showToast('删除失败'); }
     }
@@ -1404,8 +1410,8 @@ hono.get('/', (c) => {
         const titleVal=document.getElementById('etitle').value.trim();
         const contentVal=document.getElementById('econtent').value.trim();
         // extract first emoji from title or content as the post emoji
-        const _emojiRe=/\p{Emoji_Presentation}|\p{Extended_Pictographic}/u;
-        const _emojiMatch=(titleVal||contentVal).match(_emojiRe);
+        // extract first emoji (works in all environments)
+        const _emojiMatch=(titleVal||contentVal).match(/[\u{1F000}-\u{1FFFF}]|[\u{2600}-\u{27BF}]|[\u{2300}-\u{23FF}]/u);
         const emojiVal=_emojiMatch?_emojiMatch[0]:'📖';
         const body={
           date:dateVal,
@@ -1427,8 +1433,6 @@ hono.get('/', (c) => {
           closeEdit();
           showToast(id?'UPDATED ✓':'SAVED ✓');
           if(saved.entry) addOrUpdateLocal(saved.entry);
-          // background refresh to sync any KV eventual consistency
-          setTimeout(load, 1500);
         }
         else if(r.status===401){ handleAuthExpired(); }
         else { showToast('保存失败'); }
