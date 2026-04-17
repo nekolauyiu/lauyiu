@@ -369,33 +369,29 @@ function shell(title: string, active: string, body: string, script = '') {
 
     /* ── Upload button ── */
     /* ── Emoji picker ── */
-    .emoji-selected {
-      display: inline-block;
-      font-size: 28px;
-      line-height: 1;
-      margin-bottom: 10px;
-      min-width: 36px;
-      text-align: center;
-    }
     .emoji-grid {
       display: flex;
       flex-wrap: wrap;
-      gap: 4px;
+      gap: 3px;
+      background: rgba(160,112,96,.06);
+      border-radius: 12px;
+      padding: 8px;
     }
     .emoji-grid span {
-      font-size: 20px;
-      width: 36px; height: 36px;
+      font-size: 22px;
+      width: 38px; height: 38px;
       display: flex; align-items: center; justify-content: center;
       border-radius: 8px;
       cursor: pointer;
-      transition: background .15s, transform .15s;
+      transition: background .12s, transform .12s;
       user-select: none;
       border: 2px solid transparent;
     }
-    .emoji-grid span:hover { background: rgba(160,112,96,.18); transform: scale(1.15); }
+    .emoji-grid span:hover { background: rgba(160,112,96,.22); transform: scale(1.18); }
     .emoji-grid span.selected {
-      background: rgba(160,112,96,.25);
+      background: rgba(160,112,96,.32);
       border-color: ${ACCENT};
+      transform: scale(1.12);
     }
     .upload-btn {
       display: inline-block;
@@ -921,20 +917,25 @@ hono.get('/', (c) => {
           <input type="text" id="etitle" placeholder="标题（选填）" maxlength="80">
         </div>
         <div class="fg">
-          <label>EMOJI</label>
-          <div class="emoji-selected" id="emojiDisplay">📖</div>
-          <div class="emoji-grid" id="emojiGrid">
-            <span>📖</span><span>✍️</span><span>🌍</span><span>✈️</span><span>🏔️</span>
-            <span>🌊</span><span>🌸</span><span>🌙</span><span>☀️</span><span>⭐</span>
-            <span>🎉</span><span>🎵</span><span>🎨</span><span>📷</span><span>🍜</span>
-            <span>🍵</span><span>☕</span><span>🏠</span><span>🚂</span><span>🚗</span>
-            <span>💪</span><span>💡</span><span>💬</span><span>❤️</span><span>😊</span>
-            <span>😢</span><span>🤔</span><span>😴</span><span>🌈</span><span>🔥</span>
-          </div>
-        </div>
-        <div class="fg">
           <label>CONTENT</label>
           <textarea id="econtent" placeholder="记录今天的行程、见闻与思考…"></textarea>
+        </div>
+        <div class="fg">
+          <label>EMOJI <span style="font-family:sans-serif;font-size:9px;opacity:.6;letter-spacing:0">— 点击插入到标题或正文光标处</span></label>
+          <div class="emoji-grid" id="emojiGrid">
+            <span>😊</span><span>😂</span><span>🥰</span><span>😍</span><span>🤩</span>
+            <span>😎</span><span>🥳</span><span>😢</span><span>😭</span><span>😤</span>
+            <span>🤔</span><span>😴</span><span>🤗</span><span>😋</span><span>🤣</span>
+            <span>❤️</span><span>🧡</span><span>💛</span><span>💚</span><span>💙</span>
+            <span>💜</span><span>🖤</span><span>🤍</span><span>💕</span><span>💔</span>
+            <span>🔥</span><span>⭐</span><span>🌈</span><span>🌸</span><span>🌊</span>
+            <span>🌙</span><span>☀️</span><span>⛅</span><span>🌺</span><span>🍀</span>
+            <span>🎉</span><span>🎊</span><span>🎵</span><span>🎨</span><span>🎮</span>
+            <span>📖</span><span>✍️</span><span>📷</span><span>💡</span><span>💬</span>
+            <span>✈️</span><span>🌍</span><span>🏔️</span><span>🚂</span><span>🚗</span>
+            <span>🍜</span><span>🍵</span><span>☕</span><span>🍰</span><span>🍕</span>
+            <span>💪</span><span>🏠</span><span>🐱</span><span>🐶</span><span>🦋</span>
+          </div>
         </div>
         <div class="fg">
           <label>UPLOAD IMAGE</label>
@@ -1153,20 +1154,39 @@ hono.get('/', (c) => {
       this.value='';
     });
 
-    // emoji picker init
+    // emoji picker: insert into focused title or content field
     (function(){
       const grid=document.getElementById('emojiGrid');
-      const disp=document.getElementById('emojiDisplay');
+      // track last focused text input inside editOv
+      let _lastFocus=document.getElementById('econtent');
+      const titleEl=document.getElementById('etitle');
+      const contentEl=document.getElementById('econtent');
+      titleEl.addEventListener('focus',function(){ _lastFocus=this; });
+      contentEl.addEventListener('focus',function(){ _lastFocus=this; });
+
+      grid.addEventListener('mousedown',function(e){
+        // prevent blur on current input when clicking emoji
+        e.preventDefault();
+      });
       grid.addEventListener('click',function(e){
         const t=e.target;
         if(t.tagName!=='SPAN') return;
-        disp.textContent=t.textContent;
+        const emoji=t.textContent;
+        const el=_lastFocus||contentEl;
+        // insert at cursor position
+        const start=el.selectionStart;
+        const end=el.selectionEnd;
+        const val=el.value;
+        el.value=val.slice(0,start)+emoji+val.slice(end);
+        // move cursor after inserted emoji
+        const pos=start+emoji.length;
+        el.setSelectionRange(pos,pos);
+        el.focus();
+        // brief highlight on clicked emoji
         grid.querySelectorAll('span').forEach(function(s){ s.classList.remove('selected'); });
         t.classList.add('selected');
+        setTimeout(function(){ t.classList.remove('selected'); }, 400);
       });
-      // set default selected
-      const first=grid.querySelector('span');
-      if(first) first.classList.add('selected');
     })();
 
     // open new entry
@@ -1178,12 +1198,8 @@ hono.get('/', (c) => {
       document.getElementById('elinks').innerHTML='';
       const _td=new Date(); document.getElementById('edate').value=_td.getFullYear()+'-'+String(_td.getMonth()+1).padStart(2,'0')+'-'+String(_td.getDate()).padStart(2,'0');
       document.getElementById('editTitle').textContent='NEW ENTRY';
-      // reset emoji to default
-      const _disp=document.getElementById('emojiDisplay');
-      _disp.textContent='📖';
-      document.querySelectorAll('#emojiGrid span').forEach(function(s){
-        s.classList.toggle('selected', s.textContent==='📖');
-      });
+      // clear any emoji highlight
+      document.querySelectorAll('#emojiGrid span').forEach(function(s){ s.classList.remove('selected'); });
       imgData=[];
       renderImgPreview();
       const _edb=document.getElementById('editDelBtn'); if(_edb) _edb.style.display='none';
@@ -1346,12 +1362,6 @@ hono.get('/', (c) => {
         document.getElementById('eid').value=e.id;
         document.getElementById('edate').value=e.date;
         document.getElementById('etitle').value=e.title||'';
-        const disp=document.getElementById('emojiDisplay');
-        disp.textContent=e.emoji||'📖';
-        // sync selected highlight
-        document.querySelectorAll('#emojiGrid span').forEach(function(s){
-          s.classList.toggle('selected', s.textContent===disp.textContent);
-        });
         document.getElementById('econtent').value=e.content;
         imgData=[...(e.images||[])];
         renderImgPreview();
@@ -1390,11 +1400,15 @@ hono.get('/', (c) => {
         const images=[...imgData];
         const dateVal=document.getElementById('edate').value;
         const titleVal=document.getElementById('etitle').value.trim();
-        const emojiVal=document.getElementById('emojiDisplay').textContent||'📖';
+        const contentVal=document.getElementById('econtent').value.trim();
+        // extract first emoji from title or content as the post emoji
+        const _emojiRe=/\p{Emoji_Presentation}|\p{Extended_Pictographic}/u;
+        const _emojiMatch=(titleVal||contentVal).match(_emojiRe);
+        const emojiVal=_emojiMatch?_emojiMatch[0]:'📖';
         const body={
           date:dateVal,
           title:titleVal||dateVal||'日志',
-          content:document.getElementById('econtent').value.trim(),
+          content:contentVal,
           emoji:emojiVal,
           tags:[],
           images,
