@@ -1,4 +1,4 @@
-# neko · Daily Diary
+# neko · Daily 
 
 个人工作日记系统，记录每日工作计划与思考。
 
