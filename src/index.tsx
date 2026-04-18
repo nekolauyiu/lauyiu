@@ -837,12 +837,19 @@ function generateToken(): string {
   return Array.from(arr).map(b => b.toString(16).padStart(2,'0')).join('')
 }
 
+// ── In-memory token store (fallback when KV is not available) ──
+const memTokens = new Set<string>()
+
 // ── Token stored in KV so all Worker instances share state ──
 async function createToken(kv: KVNamespace | undefined): Promise<string> {
   const token = generateToken()
   if (kv) {
     // store token with 60-min TTL
     await kv.put('token:' + token, '1', { expirationTtl: 3600 })
+  } else {
+    // no KV: store in-memory, expire after 1 hour
+    memTokens.add(token)
+    setTimeout(() => memTokens.delete(token), 60 * 60 * 1000)
   }
   return token
 }
@@ -853,7 +860,8 @@ async function verifyToken(kv: KVNamespace | undefined, token: string): Promise<
     const val = await kv.get('token:' + token)
     return val === '1'
   }
-  return false
+  // no KV: fall back to in-memory set
+  return memTokens.has(token)
 }
 
 // ── Auth middleware helper ──
