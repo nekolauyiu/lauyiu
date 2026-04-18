@@ -4,7 +4,6 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Diary · neko</title>
-  <!-- 字体：优先国内 CDN，Google Fonts 作为备用，字体加载不阻塞渲染 -->
   <link rel="preconnect" href="https://fonts.loli.net" crossorigin>
   <link rel="stylesheet" href="https://fonts.loli.net/css2?family=Press+Start+2P&family=Playfair+Display:ital,wght@0,400;0,600;1,400;1,600&family=Noto+Serif+SC:wght@300;400;500&display=swap" media="print" onload="this.media='all'">
   <noscript><link rel="stylesheet" href="https://fonts.loli.net/css2?family=Press+Start+2P&family=Playfair+Display:ital,wght@0,400;0,600;1,400;1,600&family=Noto+Serif+SC:wght@300;400;500&display=swap"></noscript>
@@ -837,15 +836,17 @@ let cid = null;
 let _cachedList = [];
 
 async function load(){
-  // 超时控制：8秒未响应则放弃，避免页面一直卡在「加载中」
+  // 先立即显示空列表，页面不卡住
+  render([]);
+  // 超时5秒放弃，避免一直等待
   const controller = new AbortController();
-  const timeoutId  = setTimeout(() => controller.abort(), 8000);
+  const tid = setTimeout(() => controller.abort(), 5000);
   try{
     const r = await fetch('tables/diary_entries?limit=200', { signal: controller.signal });
-    clearTimeout(timeoutId);
+    clearTimeout(tid);
+    if(!r.ok){ return; }
     const d = await r.json();
     const raw = d.data || [];
-    // 转换为内部格式
     _cachedList = raw.map(e => ({
       id:         e.id,
       date:       e.date || '',
@@ -854,12 +855,11 @@ async function load(){
       emoji:      e.emoji || '📖',
       tags:       e.tags || [],
       imageCount: (e.images || []).length,
-      images:     undefined, // 列表不加载图片数据
+      images:     undefined,
       links:      e.links || [],
       pinned:     !!e.pinned,
       createdAt:  e.created_at || e.date || '',
     }));
-    // 排序：置顶优先，再按 date 倒序
     _cachedList.sort(function(a,b){
       if(a.pinned && !b.pinned) return -1;
       if(!a.pinned && b.pinned) return 1;
@@ -867,8 +867,8 @@ async function load(){
     });
     render(_cachedList);
   } catch(err){
-    clearTimeout(timeoutId);
-    // 请求失败或超时 → 清除「加载中」状态，显示空列表
+    clearTimeout(tid);
+    // 超时或失败：保持显示空列表，不卡住
     render([]);
   }
 }
@@ -1105,10 +1105,7 @@ function addLinkRow(url){
    ============================================= */
 async function view(id){
   try{
-    const ctrl2 = new AbortController();
-    const tid2  = setTimeout(() => ctrl2.abort(), 8000);
-    const r = await fetch('tables/diary_entries/' + id, { signal: ctrl2.signal });
-    clearTimeout(tid2);
+    const r = await fetch('tables/diary_entries/' + id);
     const e = await r.json();
     if(!e || !e.id) return;
     cid = id;
