@@ -1089,7 +1089,7 @@ hono.get('/', (c) => {
 
         const titleDiv=document.createElement('div');
         titleDiv.className='tc-title';
-        titleDiv.textContent=(e.emoji||'')+' '+e.title;
+        titleDiv.textContent=e.title;
         card.appendChild(titleDiv);
 
         const bodyDiv=document.createElement('div');
@@ -1271,7 +1271,7 @@ hono.get('/', (c) => {
       const e=d.entry; cid=id;
       document.getElementById('vdate').textContent=e.date;
       document.getElementById('vtitle').textContent=e.title;
-      document.getElementById('vemoji').textContent=e.emoji;
+      document.getElementById('vemoji').textContent='';
       document.getElementById('vcontent').textContent=e.content;
       document.getElementById('vtags').innerHTML=(e.tags||[]).map(t=>'<span class="pill">'+t+'</span>').join('');
       const imgs=e.images||[];
