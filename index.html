@@ -538,7 +538,7 @@
       <div class="ph-title">MY DIARY</div>
       <div class="ph-sub" id="ds"></div>
     </div>
-    <div id="list"><div class="empty"><div class="ei" style="font-size:32px;margin-bottom:12px">⏳</div><p style="font-family:'Press Start 2P',monospace;font-size:8px;line-height:2">LOADING…</p></div></div>
+    <div id="list"></div>
     <button class="fab" id="fabBtn" title="New Entry">+</button>
 
     <!-- New / Edit modal -->
@@ -1335,12 +1335,9 @@ async function saveEntry(){
 }
 
 /* =============================================
-   初始化 — 先渲染空列表（页面立即可见），再异步加载数据
+   初始化
    ============================================= */
-// 立即清除"LOADING…"占位，显示空状态，让页面第一帧可见
-render([]);
-// 然后在下一个事件循环异步拉取数据，不阻塞首屏渲染
-setTimeout(load, 0);
+load();
 </script>
 <script src="https://www.genspark.ai/sandbox_inspect.js"></script></body>
 </html>
