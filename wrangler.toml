@@ -1,0 +1,10 @@
+name = "neko-diary"
+compatibility_date = "2026-04-16"
+
+[site]
+bucket = "./dist/static"
+
+[[kv_namespaces]]
+binding = "DIARY_KV"
+id = "placeholder"
+preview_id = "placeholder"
