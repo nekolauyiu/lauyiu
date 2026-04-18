@@ -7,14 +7,11 @@ compatibility_date = "2026-04-16"
 compatibility_flags = ["nodejs_compat"]
 pages_build_output_dir = "dist"
 
-# ─── 可选：Cloudflare KV 绑定 ──────────────────────────────
-# 取消注释并填写真实 KV namespace ID 即可启用持久化存储：
-# 创建 KV 命令：npx wrangler kv namespace create DIARY_KV
-#
-# [[kv_namespaces]]
-# binding = "DIARY_KV"
-# id = "YOUR_KV_NAMESPACE_ID_HERE"          # 从 Cloudflare Dashboard 获取
-# preview_id = "YOUR_PREVIEW_KV_ID_HERE"    # 本地 wrangler pages dev 使用
+# ─── Cloudflare KV 绑定 ──────────────────────────────────────
+[[kv_namespaces]]
+binding = "DIARY_KV"
+id = "e51f7cda15fc4e6b9d1683f6998262f3"
+preview_id = "e51f7cda15fc4e6b9d1683f6998262f3"
 
 # ─── 本地开发变量 ──────────────────────────────────────────
 # 生产环境请在 Cloudflare Dashboard → Pages → Settings → Environment Variables 中配置
