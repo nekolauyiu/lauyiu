@@ -830,38 +830,43 @@ async function getPassword(kv: KVNamespace | undefined): Promise<string> {
   return DEFAULT_PWD
 }
 
-// ── Token store (in-memory, session-level) ──
-function generateToken(): string {
-  const arr = new Uint8Array(24)
-  crypto.getRandomValues(arr)
-  return Array.from(arr).map(b => b.toString(16).padStart(2,'0')).join('')
+// ── Self-contained signed token ──
+// Works across all Worker instances without KV.
+// Format: b64(exp) . hex(rand) . b64url(hmac)
+const TOKEN_SECRET = 'neko-diary-token-secret-2026'
+const TOKEN_TTL_MS = 30 * 60 * 1000  // 30 minutes
+
+async function hmacSign(data: string): Promise<string> {
+  const enc = new TextEncoder()
+  const key = await crypto.subtle.importKey(
+    'raw', enc.encode(TOKEN_SECRET),
+    { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']
+  )
+  const sig = await crypto.subtle.sign('HMAC', key, enc.encode(data))
+  return btoa(String.fromCharCode(...new Uint8Array(sig)))
+    .replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '')
 }
 
-// ── In-memory token store (fallback when KV is not available) ──
-const memTokens = new Set<string>()
-
-// ── Token stored in KV so all Worker instances share state ──
-async function createToken(kv: KVNamespace | undefined): Promise<string> {
-  const token = generateToken()
-  if (kv) {
-    // store token with 30-min TTL
-    await kv.put('token:' + token, '1', { expirationTtl: 1800 })
-  } else {
-    // no KV: store in-memory, expire after 1 hour
-    memTokens.add(token)
-    setTimeout(() => memTokens.delete(token), 30 * 60 * 1000)
-  }
-  return token
+async function createToken(_kv: KVNamespace | undefined): Promise<string> {
+  const exp = Date.now() + TOKEN_TTL_MS
+  const rand = Array.from(crypto.getRandomValues(new Uint8Array(16)))
+    .map(b => b.toString(16).padStart(2, '0')).join('')
+  const payload = exp + '.' + rand
+  const sig = await hmacSign(payload)
+  return btoa(String(exp)) + '.' + rand + '.' + sig
 }
 
-async function verifyToken(kv: KVNamespace | undefined, token: string): Promise<boolean> {
+async function verifyToken(_kv: KVNamespace | undefined, token: string): Promise<boolean> {
   if (!token) return false
-  if (kv) {
-    const val = await kv.get('token:' + token)
-    return val === '1'
-  }
-  // no KV: fall back to in-memory set
-  return memTokens.has(token)
+  try {
+    const parts = token.split('.')
+    if (parts.length !== 3) return false
+    const exp = parseInt(atob(parts[0]))
+    if (isNaN(exp) || Date.now() > exp) return false
+    const payload = exp + '.' + parts[1]
+    const expected = await hmacSign(payload)
+    return parts[2] === expected
+  } catch { return false }
 }
 
 // ── Auth middleware helper ──
