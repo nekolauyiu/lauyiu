@@ -614,7 +614,8 @@ function shell(title: string, active: string, body: string, script = '') {
     localStorage.removeItem('neko_token');
     localStorage.removeItem('neko_token_exp');
     applyAuthUI();
-    load();
+    // do NOT re-fetch: re-render existing cache to avoid losing in-memory data
+    render(_cachedList);
     showToast('登录已过期，请重新解锁');
   }
 
@@ -641,7 +642,9 @@ function shell(title: string, active: string, body: string, script = '') {
       // already logged in → logout
       _token=''; localStorage.removeItem('neko_token');
       applyAuthUI();
-      load();
+      // do NOT re-fetch: just re-render the existing cached list to avoid
+      // losing in-memory data on a new Worker instance
+      render(_cachedList);
       showToast('Logout');
     } else {
       openLogin();
