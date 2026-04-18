@@ -10,228 +10,48 @@
   <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   html, body { height: 100%; }
-  body {
-    background: #E4D2CC;
-    font-family: 'Noto Serif SC', serif;
-    color: #3d2b24;
-    min-height: 100vh;
-  }
+  body { background: #E4D2CC; font-family: 'Noto Serif SC', serif; color: #3d2b24; min-height: 100vh; }
   ::-webkit-scrollbar { width: 5px; }
   ::-webkit-scrollbar-track { background: #F0E6E2; }
   ::-webkit-scrollbar-thumb { background: #C8B0A8; border-radius: 3px; }
   a { text-decoration: none; color: inherit; }
   button { cursor: pointer; font-family: 'Noto Serif SC', serif; }
   input, textarea, select { font-family: 'Noto Serif SC', serif; }
-
-  /* ── Layout ── */
   .wrap { display: flex; min-height: 100vh; }
-
-  /* ── Sidebar ── */
-  .sidebar {
-    width: 200px; min-width: 200px;
-    position: fixed; top: 0; left: 0; height: 100vh;
-    display: flex; flex-direction: column;
-    background: rgba(255,255,255,0.18);
-    backdrop-filter: blur(18px);
-    -webkit-backdrop-filter: blur(18px);
-    border-right: 1px solid rgba(255,255,255,0.38);
-    z-index: 100;
-  }
-  .sb-brand {
-    padding: 52px 28px 28px;
-    border-bottom: 1px solid rgba(160,112,96,0.14);
-    text-align: center;
-  }
-  .sb-brand h1 {
-    font-family: 'French Script MT', 'Palatino Linotype', cursive;
-    font-style: italic;
-    font-size: 36px;
-    letter-spacing: 2px;
-    color: #3d2b24;
-    line-height: 1;
-    cursor: pointer;
-    user-select: none;
-    transition: opacity .2s;
-  }
+  .sidebar { width: 200px; min-width: 200px; position: fixed; top: 0; left: 0; height: 100vh; display: flex; flex-direction: column; background: rgba(255,255,255,0.18); backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px); border-right: 1px solid rgba(255,255,255,0.38); z-index: 100; }
+  .sb-brand { padding: 52px 28px 28px; border-bottom: 1px solid rgba(160,112,96,0.14); text-align: center; }
+  .sb-brand h1 { font-family: 'French Script MT', 'Palatino Linotype', cursive; font-style: italic; font-size: 36px; letter-spacing: 2px; color: #3d2b24; line-height: 1; cursor: pointer; user-select: none; transition: opacity .2s; }
   .sb-brand h1:hover { opacity: .75; }
   .sb-nav { flex: 1; padding: 28px 0; }
-  .sb-link {
-    display: block;
-    padding: 13px 28px;
-    font-size: 8px;
-    letter-spacing: 1.5px;
-    text-transform: uppercase;
-    font-family: 'Press Start 2P', monospace;
-    color: #7a5a52;
-    position: relative;
-    transition: color .25s, background .25s;
-    line-height: 1.8;
-  }
-  .sb-link:hover, .sb-link.on {
-    color: #3d2b24;
-    background: rgba(160,112,96,0.09);
-  }
-  .sb-link.on::before {
-    content: '';
-    position: absolute; left: 0; top: 50%;
-    transform: translateY(-50%);
-    width: 3px; height: 18px;
-    background: #a07060;
-    border-radius: 0 2px 2px 0;
-  }
-  .sb-foot {
-    padding: 20px 28px 28px;
-    border-top: 1px solid rgba(160,112,96,0.14);
-    font-family: 'Press Start 2P', monospace;
-    font-size: 7px;
-    color: #7a5a52;
-    line-height: 2.2;
-    letter-spacing: .4px;
-  }
+  .sb-link { display: block; padding: 13px 28px; font-size: 8px; letter-spacing: 1.5px; text-transform: uppercase; font-family: 'Press Start 2P', monospace; color: #7a5a52; position: relative; transition: color .25s, background .25s; line-height: 1.8; }
+  .sb-link:hover, .sb-link.on { color: #3d2b24; background: rgba(160,112,96,0.09); }
+  .sb-link.on::before { content: ''; position: absolute; left: 0; top: 50%; transform: translateY(-50%); width: 3px; height: 18px; background: #a07060; border-radius: 0 2px 2px 0; }
+  .sb-foot { padding: 20px 28px 28px; border-top: 1px solid rgba(160,112,96,0.14); font-family: 'Press Start 2P', monospace; font-size: 7px; color: #7a5a52; line-height: 2.2; letter-spacing: .4px; }
   .sb-foot .copy { opacity: .9; }
-  .sb-foot .sub  { opacity: .65; font-size: 6px; margin-top: 4px; }
+  .sb-foot .sub { opacity: .65; font-size: 6px; margin-top: 4px; }
   .px { font-family: 'Press Start 2P', monospace; }
-
-  /* ── Main ── */
-  .main {
-    flex: 1;
-    margin-left: 200px;
-    padding: 52px 52px 80px;
-    min-height: 100vh;
-  }
+  .main { flex: 1; margin-left: 200px; padding: 52px 52px 80px; min-height: 100vh; }
   .ph { margin-bottom: 36px; }
-  .ph-title {
-    font-family: 'Press Start 2P', monospace;
-    font-size: 16px;
-    color: #3d2b24;
-    letter-spacing: 1px;
-    line-height: 1.6;
-  }
-  .ph-sub {
-    font-size: 9px;
-    font-family: 'Press Start 2P', monospace;
-    color: #7a5a52;
-    letter-spacing: 1px;
-    margin-top: 8px;
-    line-height: 1.8;
-  }
-
-  /* ── Cards ── */
-  .card {
-    background: rgba(255,255,255,0.32);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-    border: 1px solid rgba(255,255,255,0.52);
-    border-radius: 18px;
-    padding: 28px 30px;
-    margin-bottom: 16px;
-    transition: transform .25s, box-shadow .25s;
-    max-width: 66.67%;
-    word-break: break-word;
-    overflow-wrap: break-word;
-  }
+  .ph-title { font-family: 'Press Start 2P', monospace; font-size: 16px; color: #3d2b24; letter-spacing: 1px; line-height: 1.6; }
+  .ph-sub { font-size: 9px; font-family: 'Press Start 2P', monospace; color: #7a5a52; letter-spacing: 1px; margin-top: 8px; line-height: 1.8; }
+  .card { background: rgba(255,255,255,0.32); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.52); border-radius: 18px; padding: 28px 30px; margin-bottom: 16px; transition: transform .25s, box-shadow .25s; max-width: 66.67%; word-break: break-word; overflow-wrap: break-word; }
   .card:hover { transform: translateY(-2px); box-shadow: 0 8px 28px rgba(61,43,36,.09); }
   .card-click { cursor: pointer; }
-
-  /* ── Trip card ── */
-  .tc-date {
-    font-size: 7px; letter-spacing: 1.5px;
-    font-family: 'Press Start 2P', monospace;
-    color: #7a5a52; text-transform: uppercase;
-  }
-  .tc-title {
-    font-family: 'Noto Serif SC', 'SimSun', serif;
-    font-size: 17px; color: #3d2b24;
-    font-weight: 600;
-    margin: 7px 0 9px;
-    line-height: 1.6;
-  }
-  .tc-body {
-    font-family: 'Noto Serif SC', 'SimSun', serif;
-    font-size: 12px; color: #7a5a52;
-    line-height: 1.8;
-    overflow: hidden;
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    word-break: break-word;
-    overflow-wrap: break-word;
-  }
-  .tc-foot {
-    display: flex; align-items: center;
-    gap: 10px; margin-top: 13px; flex-wrap: wrap;
-  }
-  .pill {
-    background: rgba(160,112,96,.13);
-    color: #a07060;
-    padding: 3px 11px;
-    border-radius: 20px;
-    font-size: 11px; letter-spacing: .8px;
-  }
-  .tc-time {
-    margin-left: auto;
-    font-size: 7px;
-    font-family: 'Press Start 2P', monospace;
-    color: #a07060; opacity: .8;
-  }
-  .tc-img-badge {
-    display: inline-flex; align-items: center; gap: 4px;
-    font-size: 10px; color: #a07060; opacity: .75;
-    background: rgba(160,112,96,.1);
-    border-radius: 20px;
-    padding: 2px 9px 2px 6px;
-    letter-spacing: .3px;
-  }
-
-  /* ── Form ── */
+  .tc-date { font-size: 7px; letter-spacing: 1.5px; font-family: 'Press Start 2P', monospace; color: #7a5a52; text-transform: uppercase; }
+  .tc-title { font-family: 'Noto Serif SC', 'SimSun', serif; font-size: 17px; color: #3d2b24; font-weight: 600; margin: 7px 0 9px; line-height: 1.6; }
+  .tc-body { font-family: 'Noto Serif SC', 'SimSun', serif; font-size: 12px; color: #7a5a52; line-height: 1.8; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; word-break: break-word; overflow-wrap: break-word; }
+  .tc-foot { display: flex; align-items: center; gap: 10px; margin-top: 13px; flex-wrap: wrap; }
+  .pill { background: rgba(160,112,96,.13); color: #a07060; padding: 3px 11px; border-radius: 20px; font-size: 11px; letter-spacing: .8px; }
+  .tc-time { margin-left: auto; font-size: 7px; font-family: 'Press Start 2P', monospace; color: #a07060; opacity: .8; }
+  .tc-img-badge { display: inline-flex; align-items: center; gap: 4px; font-size: 10px; color: #a07060; opacity: .75; background: rgba(160,112,96,.1); border-radius: 20px; padding: 2px 9px 2px 6px; letter-spacing: .3px; }
   .fg { margin-bottom: 20px; }
-  .fg label {
-    display: block;
-    font-size: 7px; letter-spacing: 1.5px;
-    text-transform: uppercase; color: #7a5a52;
-    font-family: 'Press Start 2P', monospace;
-    margin-bottom: 10px;
-    line-height: 1.8;
-  }
-  .fg input, .fg textarea, .fg select {
-    width: 100%;
-    padding: 12px 16px;
-    background: rgba(255,255,255,.5);
-    border: 1px solid rgba(160,112,96,.28);
-    border-radius: 11px;
-    font-size: 14px; color: #3d2b24;
-    outline: none;
-    transition: border-color .25s, box-shadow .25s, background .25s;
-  }
-  .fg input[type=date] {
-    font-family: 'Press Start 2P', monospace;
-    font-size: 9px;
-    letter-spacing: 1px;
-  }
-  #authNewPwd::placeholder, #authNewPwd2::placeholder {
-    font-family: 'Press Start 2P', monospace;
-    font-size: 7px;
-    letter-spacing: .5px;
-    color: #7a5a52;
-    opacity: .7;
-  }
-  .fg textarea {
-    min-height: 240px; resize: vertical; line-height: 1.9;
-  }
-  .fg input:focus, .fg textarea:focus, .fg select:focus {
-    border-color: #a07060;
-    background: rgba(255,255,255,.7);
-    box-shadow: 0 0 0 3px rgba(160,112,96,.12);
-  }
-
-  /* ── Buttons ── */
-  .btn {
-    padding: 11px 22px; border-radius: 8px;
-    font-size: 7px; letter-spacing: 1.5px;
-    font-family: 'Press Start 2P', monospace;
-    border: none; transition: all .25s;
-    line-height: 1.6;
-  }
+  .fg label { display: block; font-size: 7px; letter-spacing: 1.5px; text-transform: uppercase; color: #7a5a52; font-family: 'Press Start 2P', monospace; margin-bottom: 10px; line-height: 1.8; }
+  .fg input, .fg textarea, .fg select { width: 100%; padding: 12px 16px; background: rgba(255,255,255,.5); border: 1px solid rgba(160,112,96,.28); border-radius: 11px; font-size: 14px; color: #3d2b24; outline: none; transition: border-color .25s, box-shadow .25s, background .25s; }
+  .fg input[type=date] { font-family: 'Press Start 2P', monospace; font-size: 9px; letter-spacing: 1px; }
+  #authNewPwd::placeholder, #authNewPwd2::placeholder { font-family: 'Press Start 2P', monospace; font-size: 7px; letter-spacing: .5px; color: #7a5a52; opacity: .7; }
+  .fg textarea { min-height: 240px; resize: vertical; line-height: 1.9; }
+  .fg input:focus, .fg textarea:focus, .fg select:focus { border-color: #a07060; background: rgba(255,255,255,.7); box-shadow: 0 0 0 3px rgba(160,112,96,.12); }
+  .btn { padding: 11px 22px; border-radius: 8px; font-size: 7px; letter-spacing: 1.5px; font-family: 'Press Start 2P', monospace; border: none; transition: all .25s; line-height: 1.6; }
   .btn-p { background: #a07060; color: #fff; }
   .btn-p:hover { background: #3d2b24; transform: translateY(-1px); box-shadow: 0 5px 14px rgba(61,43,36,.2); }
   .btn-s { background: rgba(160,112,96,.15); color: #7a5a52; }
@@ -239,284 +59,66 @@
   .btn-d { background: rgba(200,70,70,.08); color: #b04040; border: 1px solid rgba(200,70,70,.25); }
   .btn-d:hover { background: rgba(200,70,70,.17); }
   .btn-row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
-
-  /* ── FAB ── */
-  .fab {
-    position: fixed; bottom: 36px; right: 44px;
-    width: 52px; height: 52px; border-radius: 50%;
-    background: #a07060; color: #fff;
-    border: none; font-size: 24px;
-    display: flex; align-items: center; justify-content: center;
-    box-shadow: 0 6px 20px rgba(160,112,96,.42);
-    transition: all .25s; z-index: 50;
-  }
+  .fab { position: fixed; bottom: 36px; right: 44px; width: 52px; height: 52px; border-radius: 50%; background: #a07060; color: #fff; border: none; font-size: 24px; display: flex; align-items: center; justify-content: center; box-shadow: 0 6px 20px rgba(160,112,96,.42); transition: all .25s; z-index: 50; }
   .fab:hover { background: #3d2b24; transform: scale(1.1) translateY(-2px); }
   .fab.hidden { display: none; }
-
-  /* ── Modal ── */
-  .ov {
-    position: fixed; inset: 0;
-    background: rgba(61,43,36,.28);
-    backdrop-filter: blur(5px);
-    display: flex; align-items: center; justify-content: center;
-    z-index: 200; opacity: 0; pointer-events: none;
-    transition: opacity .28s;
-  }
+  .ov { position: fixed; inset: 0; background: rgba(61,43,36,.28); backdrop-filter: blur(5px); display: flex; align-items: center; justify-content: center; z-index: 200; opacity: 0; pointer-events: none; transition: opacity .28s; }
   .ov.show { opacity: 1; pointer-events: all; }
-  .mbox {
-    background: #ede4df;
-    border-radius: 18px;
-    padding: 36px 36px 32px;
-    width: 540px; max-width: 92vw;
-    max-height: 88vh; overflow-y: auto;
-    box-shadow: 0 24px 70px rgba(61,43,36,.18);
-    transform: translateY(18px);
-    transition: transform .28s;
-  }
+  .mbox { background: #ede4df; border-radius: 18px; padding: 36px 36px 32px; width: 540px; max-width: 92vw; max-height: 88vh; overflow-y: auto; box-shadow: 0 24px 70px rgba(61,43,36,.18); transform: translateY(18px); transition: transform .28s; }
   .ov.show .mbox { transform: translateY(0); }
-  .mbox h3 {
-    font-family: 'Press Start 2P', monospace;
-    font-size: 10px; color: #3d2b24;
-    margin-bottom: 26px;
-    letter-spacing: 1px;
-    line-height: 1.8;
-  }
-
-  /* ── Auth modal ── */
+  .mbox h3 { font-family: 'Press Start 2P', monospace; font-size: 10px; color: #3d2b24; margin-bottom: 26px; letter-spacing: 1px; line-height: 1.8; }
   .auth-box { width: 340px; max-width: 92vw; }
   .auth-box .auth-hint { display: none; }
-  .auth-err {
-    font-size: 8px; color: #b04040;
-    font-family: 'Press Start 2P', monospace;
-    margin-top: 12px; display: none;
-    line-height: 1.8;
-  }
-  .admin-link {
-    font-size: 8px;
-    font-family: 'Press Start 2P', monospace;
-    color: #7a5a52;
-    opacity: .5;
-    cursor: pointer;
-    margin-top: 14px;
-    display: inline-block;
-    letter-spacing: .5px;
-    transition: opacity .2s;
-  }
+  .auth-err { font-size: 8px; color: #b04040; font-family: 'Press Start 2P', monospace; margin-top: 12px; display: none; line-height: 1.8; }
+  .admin-link { font-size: 8px; font-family: 'Press Start 2P', monospace; color: #7a5a52; opacity: .5; cursor: pointer; margin-top: 14px; display: inline-block; letter-spacing: .5px; transition: opacity .2s; }
   .admin-link:hover { opacity: 1; }
-
-  /* ── Detail view ── */
-  .det-head {
-    display: flex; justify-content: space-between;
-    align-items: flex-start; margin-bottom: 18px;
-  }
+  .det-head { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 18px; }
   .det-emoji { font-size: 26px; }
-  .det-body {
-    font-family: 'Noto Serif SC', 'SimSun', serif;
-    font-size: 13px; line-height: 2.0;
-    color: #3d2b24; white-space: pre-wrap;
-    word-break: break-word;
-    overflow-wrap: break-word;
-  }
-  hr.div {
-    border: none;
-    border-top: 1px solid rgba(160,112,96,.22);
-    margin: 20px 0;
-  }
-
-  /* ── Empty ── */
+  .det-body { font-family: 'Noto Serif SC', 'SimSun', serif; font-size: 13px; line-height: 2.0; color: #3d2b24; white-space: pre-wrap; word-break: break-word; overflow-wrap: break-word; }
+  hr.div { border: none; border-top: 1px solid rgba(160,112,96,.22); margin: 20px 0; }
   .empty { text-align: center; padding: 72px 0; color: #7a5a52; }
   .empty .ei { font-size: 44px; opacity: .45; margin-bottom: 14px; }
-  .empty p  { font-size: 13px; letter-spacing: 1px; }
-
-  /* ── Toast ── */
-  .toast {
-    position: fixed; bottom: 28px; left: 50%;
-    transform: translateX(-50%) translateY(70px);
-    background: #3d2b24; color: #fff;
-    padding: 11px 26px; border-radius: 22px;
-    font-family: 'Press Start 2P', monospace;
-    font-size: 8px; letter-spacing: 1px;
-    z-index: 999; opacity: 0;
-    transition: all .35s;
-  }
+  .empty p { font-size: 13px; letter-spacing: 1px; }
+  .toast { position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%) translateY(70px); background: #3d2b24; color: #fff; padding: 11px 26px; border-radius: 22px; font-family: 'Press Start 2P', monospace; font-size: 8px; letter-spacing: 1px; z-index: 999; opacity: 0; transition: all .35s; }
   .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
-
-  /* ── Emoji picker ── */
-  .emoji-grid {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 3px;
-    background: rgba(160,112,96,.06);
-    border-radius: 12px;
-    padding: 8px;
-  }
-  .emoji-grid span {
-    font-size: 22px;
-    width: 38px; height: 38px;
-    display: flex; align-items: center; justify-content: center;
-    border-radius: 8px;
-    cursor: pointer;
-    transition: background .12s, transform .12s;
-    user-select: none;
-    border: 2px solid transparent;
-  }
+  .emoji-grid { display: flex; flex-wrap: wrap; gap: 3px; background: rgba(160,112,96,.06); border-radius: 12px; padding: 8px; }
+  .emoji-grid span { font-size: 22px; width: 38px; height: 38px; display: flex; align-items: center; justify-content: center; border-radius: 8px; cursor: pointer; transition: background .12s, transform .12s; user-select: none; border: 2px solid transparent; }
   .emoji-grid span:hover { background: rgba(160,112,96,.22); transform: scale(1.18); }
-  .emoji-grid span.selected {
-    background: rgba(160,112,96,.32);
-    border-color: #a07060;
-    transform: scale(1.12);
-  }
-
-  /* ── Upload button ── */
-  .upload-btn {
-    display: inline-block;
-    padding: 9px 18px;
-    background: rgba(160,112,96,.15);
-    color: #7a5a52;
-    border-radius: 9px;
-    font-size: 7px;
-    font-family: 'Press Start 2P', monospace;
-    letter-spacing: 1px;
-    cursor: pointer;
-    transition: background .2s;
-    line-height: 1.6;
-  }
+  .emoji-grid span.selected { background: rgba(160,112,96,.32); border-color: #a07060; transform: scale(1.12); }
+  .upload-btn { display: inline-block; padding: 9px 18px; background: rgba(160,112,96,.15); color: #7a5a52; border-radius: 9px; font-size: 7px; font-family: 'Press Start 2P', monospace; letter-spacing: 1px; cursor: pointer; transition: background .2s; line-height: 1.6; }
   .upload-btn:hover { background: rgba(160,112,96,.28); }
-  .img-preview-wrap {
-    position: relative; display: inline-block;
-  }
-  .img-preview-wrap .rm-img {
-    position: absolute; top: -6px; right: -6px;
-    width: 18px; height: 18px; border-radius: 50%;
-    background: rgba(61,43,36,.65); color: #fff;
-    font-size: 11px; line-height: 18px; text-align: center;
-    cursor: pointer; border: none; padding: 0;
-    display: flex; align-items: center; justify-content: center;
-  }
-
-  /* ── Image grid ── */
-  .img-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
-    gap: 9px;
-    margin-top: 14px;
-  }
-  .img-grid img {
-    width: 100%;
-    max-height: 340px;
-    object-fit: contain;
-    background: rgba(160,112,96,.06);
-    border-radius: 10px;
-    cursor: pointer;
-    transition: transform .2s, box-shadow .2s;
-    border: 1px solid rgba(255,255,255,.5);
-    display: block;
-  }
+  .img-preview-wrap { position: relative; display: inline-block; }
+  .img-preview-wrap .rm-img { position: absolute; top: -6px; right: -6px; width: 18px; height: 18px; border-radius: 50%; background: rgba(61,43,36,.65); color: #fff; font-size: 11px; line-height: 18px; text-align: center; cursor: pointer; border: none; padding: 0; display: flex; align-items: center; justify-content: center; }
+  .img-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 9px; margin-top: 14px; }
+  .img-grid img { width: 100%; max-height: 340px; object-fit: contain; background: rgba(160,112,96,.06); border-radius: 10px; cursor: pointer; transition: transform .2s, box-shadow .2s; border: 1px solid rgba(255,255,255,.5); display: block; }
   .img-grid img:hover { transform: scale(1.04); box-shadow: 0 6px 18px rgba(61,43,36,.15); }
-
-  /* ── Image carousel (view modal, >3 images) ── */
-  .img-carousel {
-    position: relative;
-    margin-top: 14px;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-  }
-  .img-carousel-track {
-    display: flex;
-    gap: 9px;
-    overflow: hidden;
-    flex: 1;
-    scroll-behavior: smooth;
-  }
-  .img-carousel-track img {
-    flex: 0 0 calc(33.333% - 6px);
-    max-height: 260px;
-    object-fit: contain;
-    background: rgba(160,112,96,.06);
-    border-radius: 10px;
-    cursor: pointer;
-    transition: transform .2s, box-shadow .2s;
-    border: 1px solid rgba(255,255,255,.5);
-  }
+  .img-carousel { position: relative; margin-top: 14px; display: flex; align-items: center; gap: 6px; }
+  .img-carousel-track { display: flex; gap: 9px; overflow: hidden; flex: 1; scroll-behavior: smooth; }
+  .img-carousel-track img { flex: 0 0 calc(33.333% - 6px); max-height: 260px; object-fit: contain; background: rgba(160,112,96,.06); border-radius: 10px; cursor: pointer; transition: transform .2s, box-shadow .2s; border: 1px solid rgba(255,255,255,.5); }
   .img-carousel-track img:hover { transform: scale(1.04); box-shadow: 0 6px 18px rgba(61,43,36,.15); }
-  .carousel-btn {
-    flex: 0 0 36px;
-    width: 36px; height: 36px;
-    border-radius: 50%;
-    border: none;
-    background: #a07060;
-    color: #fff;
-    font-size: 16px;
-    cursor: pointer;
-    display: flex; align-items: center; justify-content: center;
-    box-shadow: 0 3px 10px rgba(160,112,96,.35);
-    transition: background .2s, transform .2s;
-    flex-shrink: 0;
-    position: relative;
-    z-index: 2;
-    -webkit-tap-highlight-color: transparent;
-    user-select: none;
-  }
+  .carousel-btn { flex: 0 0 36px; width: 36px; height: 36px; border-radius: 50%; border: none; background: #a07060; color: #fff; font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 3px 10px rgba(160,112,96,.35); transition: background .2s, transform .2s; flex-shrink: 0; position: relative; z-index: 2; -webkit-tap-highlight-color: transparent; user-select: none; }
   .carousel-btn:hover { background: #3d2b24; transform: scale(1.08); }
   .carousel-btn:disabled { opacity: .35; cursor: default; transform: none; }
   .carousel-counter { text-align:center; font-family:'Press Start 2P',monospace; font-size:7px; color:#7a5a52; margin-top:6px; letter-spacing:1px; }
-
-  /* ── Link list ── */
   .link-list { display: flex; flex-direction: column; gap: 8px; margin-top: 14px; }
-  .link-item {
-    display: flex; align-items: center; gap: 10px;
-    background: rgba(255,255,255,.38);
-    border: 1px solid rgba(255,255,255,.55);
-    border-radius: 10px;
-    padding: 10px 14px;
-    font-size: 13px; color: #3d2b24;
-    transition: background .2s;
-    text-decoration: none;
-  }
+  .link-item { display: flex; align-items: center; gap: 10px; background: rgba(255,255,255,.38); border: 1px solid rgba(255,255,255,.55); border-radius: 10px; padding: 10px 14px; font-size: 13px; color: #3d2b24; transition: background .2s; text-decoration: none; }
   .link-item:hover { background: rgba(255,255,255,.62); }
   .link-label { font-weight: 500; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .link-url { font-size: 11px; color: #7a5a52; opacity: .72; max-width: 160px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-
-  /* ── Link rows in form ── */
   .link-row { display: flex; gap: 8px; margin-bottom: 8px; align-items: center; }
   .link-row input { flex: 1; margin-bottom: 0; }
-  .lrow-del {
-    flex-shrink: 0; background: none; border: none;
-    color: #7a5a52; font-size: 20px; line-height: 1;
-    opacity: .45; transition: opacity .2s; padding: 0 4px;
-  }
+  .lrow-del { flex-shrink: 0; background: none; border: none; color: #7a5a52; font-size: 20px; line-height: 1; opacity: .45; transition: opacity .2s; padding: 0 4px; }
   .lrow-del:hover { opacity: 1; color: #b04040; }
-
-  /* ── Lightbox ── */
-  .lb {
-    position: fixed; inset: 0;
-    background: rgba(25,14,10,.84);
-    display: flex; align-items: center; justify-content: center;
-    z-index: 500; opacity: 0; pointer-events: none;
-    transition: opacity .25s;
-  }
+  .lb { position: fixed; inset: 0; background: rgba(25,14,10,.84); display: flex; align-items: center; justify-content: center; z-index: 500; opacity: 0; pointer-events: none; transition: opacity .25s; }
   .lb.show { opacity: 1; pointer-events: all; }
   .lb img { max-width: 92vw; max-height: 88vh; border-radius: 12px; box-shadow: 0 20px 60px rgba(0,0,0,.5); }
-  .lb-close {
-    position: absolute; top: 18px; right: 22px;
-    background: none; border: none;
-    color: #fff; font-size: 30px; opacity: .65;
-    transition: opacity .2s; line-height: 1;
-  }
+  .lb-close { position: absolute; top: 18px; right: 22px; background: none; border: none; color: #fff; font-size: 30px; opacity: .65; transition: opacity .2s; line-height: 1; }
   .lb-close:hover { opacity: 1; }
-
-  /* ── Responsive ── */
-  @media (max-width: 700px) {
-    .sidebar { width: 160px; min-width: 160px; }
-    .main { margin-left: 160px; padding: 32px 20px 72px; }
-  }
+  @media (max-width: 700px) { .sidebar { width: 160px; min-width: 160px; } .main { margin-left: 160px; padding: 32px 20px 72px; } }
   </style>
 </head>
 <body>
 <div class="wrap">
-
-  <!-- Sidebar -->
   <nav class="sidebar">
     <div class="sb-brand">
       <h1 id="nekoBtn" title="管理员入口">neko</h1>
@@ -530,8 +132,6 @@
       <div class="sub">Give AI to AI,<br>return humanity<br>to humanity.</div>
     </div>
   </nav>
-
-  <!-- Main -->
   <main class="main">
     <div class="ph">
       <div class="ph-title">MY DIARY</div>
@@ -539,27 +139,16 @@
     </div>
     <div id="list"></div>
     <button class="fab" id="fabBtn" title="New Entry">+</button>
-
-    <!-- New / Edit modal -->
     <div class="ov" id="editOv">
       <div class="mbox">
         <h3 id="editTitle">NEW ENTRY</h3>
         <input type="hidden" id="eid">
-        <div class="fg">
-          <label>DATE</label>
-          <input type="date" id="edate">
-        </div>
-        <div class="fg">
-          <label>TITLE</label>
-          <input type="text" id="etitle" placeholder="标题（选填）" maxlength="80">
-        </div>
-        <div class="fg">
-          <label>CONTENT</label>
-          <textarea id="econtent" placeholder="记录今天的行程、见闻与思考…"></textarea>
-        </div>
+        <div class="fg"><label>DATE</label><input type="date" id="edate"></div>
+        <div class="fg"><label>TITLE</label><input type="text" id="etitle" placeholder="标题（选填）" maxlength="80"></div>
+        <div class="fg"><label>CONTENT</label><textarea id="econtent" placeholder="记录今天的行程、见闻与思考…"></textarea></div>
         <div class="fg">
           <input type="hidden" id="eemoji" value="📖">
-          <label>ICON <span style="font-family:sans-serif;font-size:9px;opacity:.6;letter-spacing:0">— 点击选择帖子图标（显示在标题前）</span></label>
+          <label>ICON <span style="font-family:sans-serif;font-size:9px;opacity:.6;letter-spacing:0">— 点击选择帖子图标</span></label>
           <div id="emojiCurrent" style="font-size:28px;margin-bottom:8px;line-height:1">📖</div>
           <div class="emoji-grid" id="emojiGrid">
             <span>😊</span><span>😂</span><span>🥰</span><span>😍</span><span>🤩</span>
@@ -594,14 +183,7 @@
         </div>
       </div>
     </div>
-
-    <!-- Lightbox -->
-    <div class="lb" id="lb">
-      <button class="lb-close">✕</button>
-      <img src="" alt="">
-    </div>
-
-    <!-- View modal -->
+    <div class="lb" id="lb"><button class="lb-close">✕</button><img src="" alt=""></div>
     <div class="ov" id="viewOv">
       <div class="mbox">
         <div class="det-head">
@@ -625,11 +207,8 @@
         </div>
       </div>
     </div>
-
   </main>
 </div>
-
-<!-- Auth Modal -->
 <div class="ov" id="authOv">
   <div class="mbox auth-box">
     <h3 id="authTitle">UNLOCK</h3>
@@ -639,14 +218,8 @@
       <input type="password" id="authPwd" placeholder="••••••••" autocomplete="current-password">
     </div>
     <div id="authNewPwdWrap" style="display:none">
-      <div class="fg">
-        <label>NEW PASSWORD</label>
-        <input type="password" id="authNewPwd" placeholder="New password">
-      </div>
-      <div class="fg">
-        <label>CONFIRM</label>
-        <input type="password" id="authNewPwd2" placeholder="Enter the new password again">
-      </div>
+      <div class="fg"><label>NEW PASSWORD</label><input type="password" id="authNewPwd" placeholder="New password"></div>
+      <div class="fg"><label>CONFIRM</label><input type="password" id="authNewPwd2" placeholder="Enter the new password again"></div>
     </div>
     <div class="btn-row" style="margin-top:18px">
       <button class="btn btn-p" id="authOkBtn">OK</button>
@@ -656,685 +229,263 @@
     <span class="admin-link" id="changePwdLink" onclick="switchToChangePwd()">Modify</span>
   </div>
 </div>
-
 <div id="toast" class="toast"></div>
-
 <script>
-/* =============================================
-   Toast
-   ============================================= */
-function showToast(m, d=2400){
-  const t = document.getElementById('toast');
-  t.textContent = m; t.classList.add('show');
-  setTimeout(() => t.classList.remove('show'), d);
-}
-
-/* =============================================
-   Auth State — 本地密码验证（替代 /api/auth）
-   默认密码：neko2026
-   ============================================= */
-const DEFAULT_PWD = 'neko2026';
-function getSavedPwd(){ return localStorage.getItem('neko_pwd') || DEFAULT_PWD; }
-
-// 检查 token 是否过期
-(function(){
-  const exp = parseInt(localStorage.getItem('neko_token_exp')||'0');
-  if(exp && Date.now() > exp){
-    localStorage.removeItem('neko_token');
-    localStorage.removeItem('neko_token_exp');
-  }
-})();
-
-let _token = localStorage.getItem('neko_token') || '';
-let _authMode = 'login'; // 'login' | 'changepwd'
-
-function isAuthed(){ return !!_token; }
-
-function handleAuthExpired(){
-  _token = '';
-  localStorage.removeItem('neko_token');
-  localStorage.removeItem('neko_token_exp');
-  applyAuthUI();
-  load();
-  showToast('登录已过期，请重新解锁');
-}
-
+function showToast(m,d=2400){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),d);}
+const DEFAULT_PWD='neko2026';
+function getSavedPwd(){return localStorage.getItem('neko_pwd')||DEFAULT_PWD;}
+(function(){const exp=parseInt(localStorage.getItem('neko_token_exp')||'0');if(exp&&Date.now()>exp){localStorage.removeItem('neko_token');localStorage.removeItem('neko_token_exp');}})();
+let _token=localStorage.getItem('neko_token')||'';
+let _authMode='login';
+function isAuthed(){return !!_token;}
 function applyAuthUI(){
-  const editBtn = document.getElementById('viewEditBtn');
-  const delBtn  = document.getElementById('viewDelBtn');
-  const pinBtn  = document.getElementById('viewPinBtn');
-  if(editBtn) editBtn.style.display = isAuthed() ? '' : 'none';
-  if(delBtn)  delBtn.style.display  = isAuthed() ? '' : 'none';
-  if(pinBtn)  pinBtn.style.display  = isAuthed() ? '' : 'none';
-  const editDelBtn = document.getElementById('editDelBtn');
-  if(editDelBtn){
-    const eid = document.getElementById('eid');
-    editDelBtn.style.display = (isAuthed() && eid && eid.value) ? '' : 'none';
-  }
+  const editBtn=document.getElementById('viewEditBtn');
+  const delBtn=document.getElementById('viewDelBtn');
+  const pinBtn=document.getElementById('viewPinBtn');
+  if(editBtn)editBtn.style.display=isAuthed()?'':'none';
+  if(delBtn)delBtn.style.display=isAuthed()?'':'none';
+  if(pinBtn)pinBtn.style.display=isAuthed()?'':'none';
+  const editDelBtn=document.getElementById('editDelBtn');
+  if(editDelBtn){const eid=document.getElementById('eid');editDelBtn.style.display=(isAuthed()&&eid&&eid.value)?'':'none';}
 }
-
-/* ── Click neko → open auth modal ── */
-document.getElementById('nekoBtn').addEventListener('click', function(){
-  if(isAuthed()){
-    _token = ''; localStorage.removeItem('neko_token');
-    applyAuthUI();
-    load();
-    showToast('Logout');
-  } else {
-    openLogin();
-  }
+document.getElementById('nekoBtn').addEventListener('click',function(){
+  if(isAuthed()){_token='';localStorage.removeItem('neko_token');applyAuthUI();load();showToast('Logout');}
+  else{openLogin();}
 });
-
 function openLogin(){
-  _authMode = 'login';
-  document.getElementById('authTitle').textContent = 'UNLOCK';
-  document.getElementById('authHint').textContent  = '';
-  document.getElementById('authLabel').textContent = 'PASSWORD';
-  document.getElementById('authPwd').value = '';
-  document.getElementById('authErr').style.display = 'none';
-  document.getElementById('authNewPwdWrap').style.display = 'none';
-  document.getElementById('changePwdLink').style.display = 'inline-block';
-  document.getElementById('authOkBtn').textContent = 'OK';
+  _authMode='login';
+  document.getElementById('authTitle').textContent='UNLOCK';
+  document.getElementById('authHint').textContent='';
+  document.getElementById('authLabel').textContent='PASSWORD';
+  document.getElementById('authPwd').value='';
+  document.getElementById('authErr').style.display='none';
+  document.getElementById('authNewPwdWrap').style.display='none';
+  document.getElementById('changePwdLink').style.display='inline-block';
+  document.getElementById('authOkBtn').textContent='OK';
   document.getElementById('authOv').classList.add('show');
-  setTimeout(() => document.getElementById('authPwd').focus(), 200);
+  setTimeout(()=>document.getElementById('authPwd').focus(),200);
 }
-
 function switchToChangePwd(){
-  _authMode = 'changepwd';
-  document.getElementById('authTitle').textContent = 'CHANGE PWD';
-  document.getElementById('authHint').textContent  = '';
-  document.getElementById('authLabel').textContent = 'OLD PASSWORD';
-  document.getElementById('authPwd').value = '';
-  document.getElementById('authErr').style.display = 'none';
-  document.getElementById('authNewPwdWrap').style.display = 'block';
-  document.getElementById('changePwdLink').style.display = 'none';
-  document.getElementById('authOkBtn').textContent = 'CONFIRM';
+  _authMode='changepwd';
+  document.getElementById('authTitle').textContent='CHANGE PWD';
+  document.getElementById('authHint').textContent='';
+  document.getElementById('authLabel').textContent='OLD PASSWORD';
+  document.getElementById('authPwd').value='';
+  document.getElementById('authErr').style.display='none';
+  document.getElementById('authNewPwdWrap').style.display='block';
+  document.getElementById('changePwdLink').style.display='none';
+  document.getElementById('authOkBtn').textContent='CONFIRM';
 }
-
-function closeAuth(){
-  document.getElementById('authOv').classList.remove('show');
-  document.getElementById('authErr').style.display = 'none';
-}
-
-document.getElementById('authPwd').addEventListener('keydown', function(e){
-  if(e.key === 'Enter') document.getElementById('authOkBtn').click();
-});
-
-document.getElementById('authOkBtn').addEventListener('click', function(){
-  const pwd = document.getElementById('authPwd').value;
-  if(!pwd){
-    document.getElementById('authErr').textContent = '请输入密码';
-    document.getElementById('authErr').style.display = 'block';
-    return;
-  }
-
-  if(_authMode === 'login'){
-    if(pwd === getSavedPwd()){
-      // 生成一个简单本地 token
-      _token = 'local_' + Date.now();
-      localStorage.setItem('neko_token', _token);
-      localStorage.setItem('neko_token_exp', String(Date.now() + 60*60*1000));
-      setTimeout(function(){
-        _token = '';
-        localStorage.removeItem('neko_token');
-        localStorage.removeItem('neko_token_exp');
-        applyAuthUI();
-        showToast('登录已过期，请重新解锁');
-      }, 60*60*1000);
-      closeAuth();
-      applyAuthUI();
-      load();
-      showToast('已解锁 🔓');
-    } else {
-      document.getElementById('authErr').textContent = '密码错误，请重试';
-      document.getElementById('authErr').style.display = 'block';
-    }
-  } else {
-    // 修改密码
-    if(pwd !== getSavedPwd()){
-      document.getElementById('authErr').textContent = '旧密码错误';
-      document.getElementById('authErr').style.display = 'block';
-      return;
-    }
-    const np  = document.getElementById('authNewPwd').value;
-    const np2 = document.getElementById('authNewPwd2').value;
-    if(!np){
-      document.getElementById('authErr').textContent = '新密码不能为空';
-      document.getElementById('authErr').style.display = 'block';
-      return;
-    }
-    if(np !== np2){
-      document.getElementById('authErr').textContent = '两次密码不一致';
-      document.getElementById('authErr').style.display = 'block';
-      return;
-    }
-    localStorage.setItem('neko_pwd', np);
-    // 强制重新登录
-    _token = '';
-    localStorage.removeItem('neko_token');
-    closeAuth();
-    applyAuthUI();
-    showToast('密码已修改，请重新登录');
+function closeAuth(){document.getElementById('authOv').classList.remove('show');document.getElementById('authErr').style.display='none';}
+document.getElementById('authPwd').addEventListener('keydown',function(e){if(e.key==='Enter')document.getElementById('authOkBtn').click();});
+document.getElementById('authOkBtn').addEventListener('click',function(){
+  const pwd=document.getElementById('authPwd').value;
+  if(!pwd){document.getElementById('authErr').textContent='请输入密码';document.getElementById('authErr').style.display='block';return;}
+  if(_authMode==='login'){
+    if(pwd===getSavedPwd()){
+      _token='local_'+Date.now();
+      localStorage.setItem('neko_token',_token);
+      localStorage.setItem('neko_token_exp',String(Date.now()+60*60*1000));
+      setTimeout(function(){_token='';localStorage.removeItem('neko_token');localStorage.removeItem('neko_token_exp');applyAuthUI();showToast('登录已过期，请重新解锁');},60*60*1000);
+      closeAuth();applyAuthUI();load();showToast('已解锁 🔓');
+    }else{document.getElementById('authErr').textContent='密码错误，请重试';document.getElementById('authErr').style.display='block';}
+  }else{
+    if(pwd!==getSavedPwd()){document.getElementById('authErr').textContent='旧密码错误';document.getElementById('authErr').style.display='block';return;}
+    const np=document.getElementById('authNewPwd').value;
+    const np2=document.getElementById('authNewPwd2').value;
+    if(!np){document.getElementById('authErr').textContent='新密码不能为空';document.getElementById('authErr').style.display='block';return;}
+    if(np!==np2){document.getElementById('authErr').textContent='两次密码不一致';document.getElementById('authErr').style.display='block';return;}
+    localStorage.setItem('neko_pwd',np);_token='';localStorage.removeItem('neko_token');closeAuth();applyAuthUI();showToast('密码已修改，请重新登录');
   }
 });
-
 applyAuthUI();
-
-/* =============================================
-   日期显示
-   ============================================= */
-const mo = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-const nd = new Date();
-document.getElementById('ds').textContent = mo[nd.getMonth()] + ' ' + nd.getDate() + ', ' + nd.getFullYear();
-const _pad = n => String(n).padStart(2,'0');
-document.getElementById('edate').value = nd.getFullYear() + '-' + _pad(nd.getMonth()+1) + '-' + _pad(nd.getDate());
-
-/* =============================================
-   数据层 — RESTful Table API
-   ============================================= */
-let cid = null;
-let _cachedList = [];
+const mo=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const nd=new Date();
+document.getElementById('ds').textContent=mo[nd.getMonth()]+' '+nd.getDate()+', '+nd.getFullYear();
+const _pad=n=>String(n).padStart(2,'0');
+document.getElementById('edate').value=nd.getFullYear()+'-'+_pad(nd.getMonth()+1)+'-'+_pad(nd.getDate());
+let cid=null;
+let _cachedList=[];
 
 async function load(){
-  // 先立即显示空列表，页面不卡住
   render([]);
-  // 超时5秒放弃，避免一直等待
-  const controller = new AbortController();
-  const tid = setTimeout(() => controller.abort(), 5000);
+  const controller=new AbortController();
+  const tid=setTimeout(()=>controller.abort(),5000);
   try{
-    const r = await fetch('tables/diary_entries?limit=200', { signal: controller.signal });
+    const r=await fetch('tables/diary_entries?limit=200',{signal:controller.signal});
     clearTimeout(tid);
-    if(!r.ok){ return; }
-    const d = await r.json();
-    const raw = d.data || [];
-    _cachedList = raw.map(e => ({
-      id:         e.id,
-      date:       e.date || '',
-      title:      e.title || '',
-      content:    e.content || '',
-      emoji:      e.emoji || '📖',
-      tags:       e.tags || [],
-      imageCount: (e.images || []).length,
-      images:     undefined,
-      links:      e.links || [],
-      pinned:     !!e.pinned,
-      createdAt:  e.created_at || e.date || '',
-    }));
-    _cachedList.sort(function(a,b){
-      if(a.pinned && !b.pinned) return -1;
-      if(!a.pinned && b.pinned) return 1;
-      return (b.date || '').localeCompare(a.date || '');
-    });
+    if(!r.ok){return;}
+    const d=await r.json();
+    const raw=d.data||[];
+    _cachedList=raw.map(e=>({id:e.id,date:e.date||'',title:e.title||'',content:e.content||'',emoji:e.emoji||'📖',tags:e.tags||[],imageCount:(e.images||[]).length,images:undefined,links:e.links||[],pinned:!!e.pinned,createdAt:e.created_at||e.date||''}));
+    _cachedList.sort(function(a,b){if(a.pinned&&!b.pinned)return -1;if(!a.pinned&&b.pinned)return 1;return(b.date||'').localeCompare(a.date||'');});
     render(_cachedList);
-  } catch(err){
+  }catch(err){
     clearTimeout(tid);
-    // 超时或失败：保持显示空列表，不卡住
     render([]);
   }
 }
 
 function addOrUpdateLocal(entry){
-  const slim = Object.assign({}, entry, { imageCount:(entry.images||[]).length, images: undefined });
+  const slim=Object.assign({},entry,{imageCount:(entry.images||[]).length,images:undefined});
   delete slim.images;
-  const idx = _cachedList.findIndex(e => e.id === entry.id);
-  if(idx >= 0){ _cachedList[idx] = slim; }
-  else { _cachedList.unshift(slim); }
-  _cachedList.sort(function(a,b){
-    if(a.pinned && !b.pinned) return -1;
-    if(!a.pinned && b.pinned) return 1;
-    return (b.date || '').localeCompare(a.date || '');
-  });
+  const idx=_cachedList.findIndex(e=>e.id===entry.id);
+  if(idx>=0){_cachedList[idx]=slim;}else{_cachedList.unshift(slim);}
+  _cachedList.sort(function(a,b){if(a.pinned&&!b.pinned)return -1;if(!a.pinned&&b.pinned)return 1;return(b.date||'').localeCompare(a.date||'');});
   render(_cachedList);
 }
+function removeLocal(id){_cachedList=_cachedList.filter(e=>e.id!==id);render(_cachedList);}
 
-function removeLocal(id){
-  _cachedList = _cachedList.filter(e => e.id !== id);
-  render(_cachedList);
-}
-
-/* =============================================
-   渲染日记列表
-   ============================================= */
 function render(list){
-  const el = document.getElementById('list');
-  if(!el) return;
-  el.innerHTML = '';
+  const el=document.getElementById('list');
+  if(!el)return;
+  el.innerHTML='';
   if(!list.length){
-    const emp = document.createElement('div');
-    emp.className = 'empty';
-    const emojiDiv = document.createElement('div');
-    emojiDiv.className = 'ei';
-    emojiDiv.textContent = '✍️';
-    const msg = document.createElement('p');
-    msg.style.cssText = "font-family:'Press Start 2P',monospace;font-size:8px;line-height:2";
-    msg.textContent = 'NO ENTRIES YET';
-    emp.appendChild(emojiDiv);
-    emp.appendChild(msg);
-    el.appendChild(emp);
-    return;
+    const emp=document.createElement('div');emp.className='empty';
+    const emojiDiv=document.createElement('div');emojiDiv.className='ei';emojiDiv.textContent='✍️';
+    const msg=document.createElement('p');msg.style.cssText="font-family:'Press Start 2P',monospace;font-size:8px;line-height:2";msg.textContent='NO ENTRIES YET';
+    emp.appendChild(emojiDiv);emp.appendChild(msg);el.appendChild(emp);return;
   }
   list.forEach(function(e){
-    const card = document.createElement('div');
-    card.className = 'card card-click';
-    card.addEventListener('click', function(){ view(e.id); });
-
-    const dateDiv = document.createElement('div');
-    dateDiv.className = 'tc-date';
-    dateDiv.textContent = e.date || (mo[nd.getMonth()] + ' ' + nd.getDate() + ', ' + nd.getFullYear());
-    if(e.pinned){
-      const pin = document.createElement('span');
-      pin.style.cssText = 'color:#a07060;font-size:9px;margin-left:4px';
-      pin.textContent = '📌';
-      dateDiv.appendChild(pin);
-    }
+    const card=document.createElement('div');card.className='card card-click';
+    card.addEventListener('click',function(){view(e.id);});
+    const dateDiv=document.createElement('div');dateDiv.className='tc-date';
+    dateDiv.textContent=e.date||(mo[nd.getMonth()]+' '+nd.getDate()+', '+nd.getFullYear());
+    if(e.pinned){const pin=document.createElement('span');pin.style.cssText='color:#a07060;font-size:9px;margin-left:4px';pin.textContent='📌';dateDiv.appendChild(pin);}
     card.appendChild(dateDiv);
-
-    const titleDiv = document.createElement('div');
-    titleDiv.className = 'tc-title';
-    titleDiv.textContent = (e.emoji || '') + ' ' + (e.title || '');
-    card.appendChild(titleDiv);
-
-    const bodyDiv = document.createElement('div');
-    bodyDiv.className = 'tc-body';
-    bodyDiv.textContent = e.content || '';
-    card.appendChild(bodyDiv);
-
-    const foot = document.createElement('div');
-    foot.className = 'tc-foot';
-    (e.tags || []).forEach(function(t){
-      const pill = document.createElement('span');
-      pill.className = 'pill';
-      pill.textContent = t;
-      foot.appendChild(pill);
-    });
-    const imgCnt = e.imageCount || 0;
-    if(imgCnt > 0){
-      const badge = document.createElement('span');
-      badge.className = 'tc-img-badge';
-      badge.textContent = '🖼 ' + imgCnt;
-      foot.appendChild(badge);
-    }
-    if(isAuthed()){
-      const editBtn = document.createElement('button');
-      editBtn.className = 'btn btn-p card-edit-btn';
-      editBtn.style.cssText = 'font-size:6px;padding:5px 10px;margin-left:auto';
-      editBtn.textContent = 'EDIT';
-      editBtn.addEventListener('click', function(ev){
-        ev.stopPropagation();
-        cid = e.id;
-        editCurrent();
-      });
-      foot.appendChild(editBtn);
-    }
-    card.appendChild(foot);
-    el.appendChild(card);
+    const titleDiv=document.createElement('div');titleDiv.className='tc-title';titleDiv.textContent=(e.emoji||'')+' '+(e.title||'');card.appendChild(titleDiv);
+    const bodyDiv=document.createElement('div');bodyDiv.className='tc-body';bodyDiv.textContent=e.content||'';card.appendChild(bodyDiv);
+    const foot=document.createElement('div');foot.className='tc-foot';
+    (e.tags||[]).forEach(function(t){const pill=document.createElement('span');pill.className='pill';pill.textContent=t;foot.appendChild(pill);});
+    const imgCnt=e.imageCount||0;
+    if(imgCnt>0){const badge=document.createElement('span');badge.className='tc-img-badge';badge.textContent='🖼 '+imgCnt;foot.appendChild(badge);}
+    if(isAuthed()){const editBtn=document.createElement('button');editBtn.className='btn btn-p card-edit-btn';editBtn.style.cssText='font-size:6px;padding:5px 10px;margin-left:auto';editBtn.textContent='EDIT';editBtn.addEventListener('click',function(ev){ev.stopPropagation();cid=e.id;editCurrent();});foot.appendChild(editBtn);}
+    card.appendChild(foot);el.appendChild(card);
   });
 }
 
-/* =============================================
-   图片压缩 & 预览
-   ============================================= */
-let imgData = [];
+let imgData=[];
+function renderImgPreview(){const box=document.getElementById('imgPreview');box.innerHTML=imgData.map((src,i)=>'<div class="img-preview-wrap"><img src="'+src+'" style="width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:10px;cursor:pointer" onclick="openLb(this.src)"><button class="rm-img" onclick="removeImg('+i+')">×</button></div>').join('');}
+function removeImg(i){imgData.splice(i,1);renderImgPreview();}
+function compressImg(file,cb){const reader=new FileReader();reader.onload=function(ev){const img=new Image();img.onload=function(){const MAX=1200;let w=img.width,h=img.height;if(w>MAX||h>MAX){if(w>h){h=Math.round(h*MAX/w);w=MAX;}else{w=Math.round(w*MAX/h);h=MAX;}}const canvas=document.createElement('canvas');canvas.width=w;canvas.height=h;canvas.getContext('2d').drawImage(img,0,0,w,h);cb(canvas.toDataURL('image/jpeg',0.72));};img.src=ev.target.result;};reader.readAsDataURL(file);}
+document.getElementById('eimages').addEventListener('change',function(){const files=[...this.files];let done=0;if(!files.length)return;files.forEach(f=>{compressImg(f,function(dataUrl){imgData.push(dataUrl);done++;if(done===files.length)renderImgPreview();});});this.value='';});
 
-function renderImgPreview(){
-  const box = document.getElementById('imgPreview');
-  box.innerHTML = imgData.map((src, i) =>
-    '<div class="img-preview-wrap">' +
-    '<img src="' + src + '" style="width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:10px;cursor:pointer" onclick="openLb(this.src)">' +
-    '<button class="rm-img" onclick="removeImg(' + i + ')">×</button>' +
-    '</div>'
-  ).join('');
-}
-
-function removeImg(i){
-  imgData.splice(i, 1);
-  renderImgPreview();
-}
-
-function compressImg(file, cb){
-  const reader = new FileReader();
-  reader.onload = function(ev){
-    const img = new Image();
-    img.onload = function(){
-      const MAX = 1200;
-      let w = img.width, h = img.height;
-      if(w > MAX || h > MAX){
-        if(w > h){ h = Math.round(h*MAX/w); w = MAX; }
-        else      { w = Math.round(w*MAX/h); h = MAX; }
-      }
-      const canvas = document.createElement('canvas');
-      canvas.width = w; canvas.height = h;
-      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
-      cb(canvas.toDataURL('image/jpeg', 0.72));
-    };
-    img.src = ev.target.result;
-  };
-  reader.readAsDataURL(file);
-}
-
-document.getElementById('eimages').addEventListener('change', function(){
-  const files = [...this.files];
-  let done = 0;
-  if(!files.length) return;
-  files.forEach(f => {
-    compressImg(f, function(dataUrl){
-      imgData.push(dataUrl);
-      done++;
-      if(done === files.length) renderImgPreview();
-    });
-  });
-  this.value = '';
-});
-
-/* =============================================
-   Emoji Picker
-   ============================================= */
 (function(){
-  const grid = document.getElementById('emojiGrid');
-  const emojiInput = document.getElementById('eemoji');
-  const emojiCurrent = document.getElementById('emojiCurrent');
-
-  function setEmoji(emoji){
-    emojiInput.value = emoji;
-    emojiCurrent.textContent = emoji;
-    grid.querySelectorAll('span').forEach(function(s){ s.classList.remove('selected'); });
-    for(const s of grid.querySelectorAll('span')){
-      if(s.textContent === emoji){ s.classList.add('selected'); break; }
-    }
-  }
-
-  grid.addEventListener('click', function(e){
-    const t = e.target;
-    if(t.tagName !== 'SPAN') return;
-    setEmoji(t.textContent);
-  });
-
-  window._setPostEmoji = setEmoji;
+  const grid=document.getElementById('emojiGrid');
+  const emojiInput=document.getElementById('eemoji');
+  const emojiCurrent=document.getElementById('emojiCurrent');
+  function setEmoji(emoji){emojiInput.value=emoji;emojiCurrent.textContent=emoji;grid.querySelectorAll('span').forEach(function(s){s.classList.remove('selected');});for(const s of grid.querySelectorAll('span')){if(s.textContent===emoji){s.classList.add('selected');break;}}}
+  grid.addEventListener('click',function(e){const t=e.target;if(t.tagName!=='SPAN')return;setEmoji(t.textContent);});
+  window._setPostEmoji=setEmoji;
 })();
 
-/* =============================================
-   FAB — 新建日记
-   ============================================= */
-document.getElementById('fabBtn').onclick = () => {
-  if(!isAuthed()){ openLogin(); return; }
-  document.getElementById('eid').value = '';
-  document.getElementById('etitle').value = '';
-  document.getElementById('econtent').value = '';
-  document.getElementById('elinks').innerHTML = '';
-  const _td = new Date();
-  document.getElementById('edate').value = _td.getFullYear() + '-' + String(_td.getMonth()+1).padStart(2,'0') + '-' + String(_td.getDate()).padStart(2,'0');
-  document.getElementById('editTitle').textContent = 'NEW ENTRY';
-  if(window._setPostEmoji) window._setPostEmoji('📖');
-  imgData = [];
-  renderImgPreview();
-  const _edb = document.getElementById('editDelBtn');
-  if(_edb) _edb.style.display = 'none';
-  document.getElementById('editOv').classList.add('show');
+document.getElementById('fabBtn').onclick=()=>{
+  if(!isAuthed()){openLogin();return;}
+  document.getElementById('eid').value='';document.getElementById('etitle').value='';document.getElementById('econtent').value='';document.getElementById('elinks').innerHTML='';
+  const _td=new Date();document.getElementById('edate').value=_td.getFullYear()+'-'+String(_td.getMonth()+1).padStart(2,'0')+'-'+String(_td.getDate()).padStart(2,'0');
+  document.getElementById('editTitle').textContent='NEW ENTRY';if(window._setPostEmoji)window._setPostEmoji('📖');imgData=[];renderImgPreview();
+  const _edb=document.getElementById('editDelBtn');if(_edb)_edb.style.display='none';document.getElementById('editOv').classList.add('show');
 };
+function closeEdit(){document.getElementById('editOv').classList.remove('show');}
+function closeView(){document.getElementById('viewOv').classList.remove('show');}
 
-function closeEdit(){ document.getElementById('editOv').classList.remove('show'); }
-function closeView(){ document.getElementById('viewOv').classList.remove('show'); }
+const lbEl=document.getElementById('lb');
+lbEl.querySelector('.lb-close').onclick=()=>lbEl.classList.remove('show');
+lbEl.addEventListener('click',e=>{if(e.target===lbEl)lbEl.classList.remove('show');});
+function openLb(src){lbEl.querySelector('img').src=src;lbEl.classList.add('show');}
 
-/* =============================================
-   Lightbox
-   ============================================= */
-const lbEl = document.getElementById('lb');
-lbEl.querySelector('.lb-close').onclick = () => lbEl.classList.remove('show');
-lbEl.addEventListener('click', e => { if(e.target === lbEl) lbEl.classList.remove('show'); });
-function openLb(src){ lbEl.querySelector('img').src = src; lbEl.classList.add('show'); }
-
-/* =============================================
-   Link Row
-   ============================================= */
 function addLinkRow(url){
-  url = url || '';
-  const wrap = document.getElementById('elinks');
-  const row = document.createElement('div');
-  row.className = 'link-row';
-  const u = document.createElement('input');
-  u.type = 'url'; u.placeholder = 'https://'; u.value = url; u.style.flex = '1';
-  const d = document.createElement('button');
-  d.type = 'button'; d.className = 'lrow-del'; d.textContent = '×';
-  d.onclick = () => row.remove();
-  row.appendChild(u); row.appendChild(d);
-  wrap.appendChild(row);
+  url=url||'';const wrap=document.getElementById('elinks');const row=document.createElement('div');row.className='link-row';
+  const u=document.createElement('input');u.type='url';u.placeholder='https://';u.value=url;u.style.flex='1';
+  const d=document.createElement('button');d.type='button';d.className='lrow-del';d.textContent='×';d.onclick=()=>row.remove();
+  row.appendChild(u);row.appendChild(d);wrap.appendChild(row);
 }
 
-/* =============================================
-   查看日记
-   ============================================= */
 async function view(id){
   try{
-    const r = await fetch('tables/diary_entries/' + id);
-    const e = await r.json();
-    if(!e || !e.id) return;
-    cid = id;
-    document.getElementById('vdate').textContent    = e.date || '';
-    document.getElementById('vtitle').textContent   = e.title || '';
-    document.getElementById('vemoji').textContent   = e.emoji || '📖';
-    document.getElementById('vcontent').textContent = e.content || '';
-    document.getElementById('vtags').innerHTML = (e.tags || []).map(t => '<span class="pill">' + t + '</span>').join('');
-
-    const imgs = e.images || [];
-    const vimEl = document.getElementById('vimages');
-    vimEl.className = '';
-    vimEl.innerHTML = '';
-
-    if(imgs.length > 3){
-      // 轮播
-      const perPage = 3;
-      const total = imgs.length;
-      let _page = 0;
-      const totalPages = Math.ceil(total / perPage);
-
-      const wrapper = document.createElement('div');
-      wrapper.className = 'img-carousel';
-
-      const btnL = document.createElement('button');
-      btnL.type = 'button'; btnL.className = 'carousel-btn cl'; btnL.innerHTML = '&#8592;';
-
-      const track = document.createElement('div');
-      track.className = 'img-carousel-track';
-
-      const btnR = document.createElement('button');
-      btnR.type = 'button'; btnR.className = 'carousel-btn cr'; btnR.innerHTML = '&#8594;';
-
-      const counter = document.createElement('div');
-      counter.className = 'carousel-counter';
-
-      wrapper.appendChild(btnL);
-      wrapper.appendChild(track);
-      wrapper.appendChild(btnR);
-      vimEl.appendChild(wrapper);
-      vimEl.appendChild(counter);
-
-      function _render(){
-        track.innerHTML = '';
-        const start = _page * perPage;
-        imgs.slice(start, start + perPage).forEach(function(u){
-          const img = document.createElement('img');
-          img.src = u; img.alt = ''; img.loading = 'lazy';
-          img.onclick = function(ev){ ev.stopPropagation(); openLb(u); };
-          track.appendChild(img);
-        });
-        btnL.disabled = (_page === 0);
-        btnR.disabled = (_page >= totalPages - 1);
-        counter.textContent = (_page + 1) + ' / ' + totalPages;
-      }
-
-      btnL.addEventListener('click', function(ev){
-        ev.preventDefault(); ev.stopPropagation();
-        if(_page > 0){ _page--; _render(); }
-      });
-      btnR.addEventListener('click', function(ev){
-        ev.preventDefault(); ev.stopPropagation();
-        if(_page < totalPages - 1){ _page++; _render(); }
-      });
+    const r=await fetch('tables/diary_entries/'+id);
+    const e=await r.json();
+    if(!e||!e.id)return;
+    cid=id;
+    document.getElementById('vdate').textContent=e.date||'';
+    document.getElementById('vtitle').textContent=e.title||'';
+    document.getElementById('vemoji').textContent=e.emoji||'📖';
+    document.getElementById('vcontent').textContent=e.content||'';
+    document.getElementById('vtags').innerHTML=(e.tags||[]).map(t=>'<span class="pill">'+t+'</span>').join('');
+    const imgs=e.images||[];const vimEl=document.getElementById('vimages');vimEl.className='';vimEl.innerHTML='';
+    if(imgs.length>3){
+      const perPage=3;const total=imgs.length;let _page=0;const totalPages=Math.ceil(total/perPage);
+      const wrapper=document.createElement('div');wrapper.className='img-carousel';
+      const btnL=document.createElement('button');btnL.type='button';btnL.className='carousel-btn cl';btnL.innerHTML='&#8592;';
+      const track=document.createElement('div');track.className='img-carousel-track';
+      const btnR=document.createElement('button');btnR.type='button';btnR.className='carousel-btn cr';btnR.innerHTML='&#8594;';
+      const counter=document.createElement('div');counter.className='carousel-counter';
+      wrapper.appendChild(btnL);wrapper.appendChild(track);wrapper.appendChild(btnR);vimEl.appendChild(wrapper);vimEl.appendChild(counter);
+      function _render(){track.innerHTML='';const start=_page*perPage;imgs.slice(start,start+perPage).forEach(function(u){const img=document.createElement('img');img.src=u;img.alt='';img.loading='lazy';img.onclick=function(ev){ev.stopPropagation();openLb(u);};track.appendChild(img);});btnL.disabled=(_page===0);btnR.disabled=(_page>=totalPages-1);counter.textContent=(_page+1)+' / '+totalPages;}
+      btnL.addEventListener('click',function(ev){ev.preventDefault();ev.stopPropagation();if(_page>0){_page--;_render();}});
+      btnR.addEventListener('click',function(ev){ev.preventDefault();ev.stopPropagation();if(_page<totalPages-1){_page++;_render();}});
       _render();
-    } else {
-      vimEl.className = 'img-grid';
-      imgs.forEach(function(u){
-        const img = document.createElement('img');
-        img.src = u; img.alt = ''; img.loading = 'lazy';
-        img.onclick = function(){ openLb(u); };
-        vimEl.appendChild(img);
-      });
+    }else{
+      vimEl.className='img-grid';imgs.forEach(function(u){const img=document.createElement('img');img.src=u;img.alt='';img.loading='lazy';img.onclick=function(){openLb(u);};vimEl.appendChild(img);});
     }
-
-    const lks = e.links || [];
-    document.getElementById('vlinks').innerHTML = lks.map(l =>
-      '<a class="link-item" href="' + l.url + '" target="_blank" rel="noopener noreferrer">' +
-      '<span style="font-size:15px">🔗</span>' +
-      '<span class="link-label">' + (l.label || l.url) + '</span>' +
-      '<span class="link-url">' + l.url + '</span>' +
-      '</a>'
-    ).join('');
-
-    const pinBtn = document.getElementById('viewPinBtn');
-    if(pinBtn) pinBtn.textContent = e.pinned ? '📌 UNPIN' : '📌 PIN';
-
-    document.getElementById('viewOv').classList.add('show');
-    applyAuthUI();
-  } catch(err){
-    showToast('加载失败');
-  }
+    const lks=e.links||[];
+    document.getElementById('vlinks').innerHTML=lks.map(l=>'<a class="link-item" href="'+l.url+'" target="_blank" rel="noopener noreferrer"><span style="font-size:15px">🔗</span><span class="link-label">'+(l.label||l.url)+'</span><span class="link-url">'+l.url+'</span></a>').join('');
+    const pinBtn=document.getElementById('viewPinBtn');if(pinBtn)pinBtn.textContent=e.pinned?'📌 UNPIN':'📌 PIN';
+    document.getElementById('viewOv').classList.add('show');applyAuthUI();
+  }catch(err){showToast('加载失败');}
 }
 
-/* =============================================
-   置顶
-   ============================================= */
 async function togglePin(){
-  if(!isAuthed()){ showToast('请先解锁'); return; }
-  const cached = _cachedList.find(function(e){ return e.id === cid; });
-  const isPinned = cached ? !!cached.pinned : false;
+  if(!isAuthed()){showToast('请先解锁');return;}
+  const cached=_cachedList.find(function(e){return e.id===cid;});const isPinned=cached?!!cached.pinned:false;
   try{
-    await fetch('tables/diary_entries/' + cid, {
-      method: 'PATCH',
-      headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({ pinned: !isPinned })
-    });
-    const newPinned = !isPinned;
-    const pinBtn = document.getElementById('viewPinBtn');
-    if(pinBtn) pinBtn.textContent = newPinned ? '📌 UNPIN' : '📌 PIN';
-    showToast(newPinned ? '已置顶 📌' : '已取消置顶');
-    if(cached){ cached.pinned = newPinned; }
-    _cachedList.sort(function(a,b){
-      if(a.pinned && !b.pinned) return -1;
-      if(!a.pinned && b.pinned) return 1;
-      return (b.date || '').localeCompare(a.date || '');
-    });
-    render(_cachedList);
-  } catch(e){
-    showToast('操作失败');
-  }
+    await fetch('tables/diary_entries/'+cid,{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({pinned:!isPinned})});
+    const newPinned=!isPinned;const pinBtn=document.getElementById('viewPinBtn');if(pinBtn)pinBtn.textContent=newPinned?'📌 UNPIN':'📌 PIN';
+    showToast(newPinned?'已置顶 📌':'已取消置顶');if(cached){cached.pinned=newPinned;}
+    _cachedList.sort(function(a,b){if(a.pinned&&!b.pinned)return -1;if(!a.pinned&&b.pinned)return 1;return(b.date||'').localeCompare(a.date||'');});render(_cachedList);
+  }catch(e){showToast('操作失败');}
 }
 
-/* =============================================
-   编辑
-   ============================================= */
 function editCurrent(){
-  if(!isAuthed()){ showToast('请先解锁'); return; }
+  if(!isAuthed()){showToast('请先解锁');return;}
   closeView();
-  fetch('tables/diary_entries/' + cid).then(r => r.json()).then(e => {
-    document.getElementById('eid').value     = e.id;
-    document.getElementById('edate').value   = e.date || '';
-    document.getElementById('etitle').value  = e.title || '';
-    document.getElementById('econtent').value = e.content || '';
-    if(window._setPostEmoji) window._setPostEmoji(e.emoji || '📖');
-    imgData = [...(e.images || [])];
-    renderImgPreview();
-    const wrap = document.getElementById('elinks');
-    wrap.innerHTML = '';
-    (e.links || []).forEach(l => addLinkRow(l.url));
-    document.getElementById('editTitle').textContent = 'EDIT ENTRY';
-    document.getElementById('editOv').classList.add('show');
-    applyAuthUI();
+  fetch('tables/diary_entries/'+cid).then(r=>r.json()).then(e=>{
+    document.getElementById('eid').value=e.id;document.getElementById('edate').value=e.date||'';document.getElementById('etitle').value=e.title||'';document.getElementById('econtent').value=e.content||'';
+    if(window._setPostEmoji)window._setPostEmoji(e.emoji||'📖');imgData=[...(e.images||[])];renderImgPreview();
+    const wrap=document.getElementById('elinks');wrap.innerHTML='';(e.links||[]).forEach(l=>addLinkRow(l.url));
+    document.getElementById('editTitle').textContent='EDIT ENTRY';document.getElementById('editOv').classList.add('show');applyAuthUI();
   });
 }
 
-/* =============================================
-   删除
-   ============================================= */
 async function deleteCurrent(){
-  if(!isAuthed()){ showToast('请先解锁'); return; }
-  if(!cid) return;
-  try{
-    await fetch('tables/diary_entries/' + cid, { method: 'DELETE' });
-    closeView(); closeEdit();
-    showToast('DELETED');
-    removeLocal(cid);
-  } catch(e){
-    showToast('删除失败');
-  }
+  if(!isAuthed()){showToast('请先解锁');return;}
+  if(!cid)return;
+  try{await fetch('tables/diary_entries/'+cid,{method:'DELETE'});closeView();closeEdit();showToast('DELETED');removeLocal(cid);}
+  catch(e){showToast('删除失败');}
 }
 
-/* =============================================
-   保存 / 更新
-   ============================================= */
 async function saveEntry(){
-  if(!isAuthed()){ showToast('请先解锁'); return; }
-  const saveBtn = document.querySelector('#editOv .btn-p');
-  if(saveBtn){ saveBtn.textContent = 'SAVING…'; saveBtn.disabled = true; }
+  if(!isAuthed()){showToast('请先解锁');return;}
+  const saveBtn=document.querySelector('#editOv .btn-p');if(saveBtn){saveBtn.textContent='SAVING…';saveBtn.disabled=true;}
   try{
-    const id       = document.getElementById('eid').value;
-    const lrows    = [...document.querySelectorAll('#elinks .link-row')];
-    const links    = lrows.map(row => {
-      const ins = row.querySelectorAll('input');
-      return { url: ins[0].value.trim(), label: '' };
-    }).filter(l => l.url);
-    const images   = [...imgData];
-    const dateVal  = document.getElementById('edate').value;
-    const titleVal = document.getElementById('etitle').value.trim();
-    const contentVal = document.getElementById('econtent').value.trim();
-    const emojiVal = (document.getElementById('eemoji').value) || '📖';
-
-    const body = {
-      date:    dateVal,
-      title:   titleVal || dateVal || '日志',
-      content: contentVal,
-      emoji:   emojiVal,
-      tags:    [],
-      images,
-      links,
-      pinned:  false,
-    };
-
+    const id=document.getElementById('eid').value;
+    const lrows=[...document.querySelectorAll('#elinks .link-row')];
+    const links=lrows.map(row=>{const ins=row.querySelectorAll('input');return{url:ins[0].value.trim(),label:''};}).filter(l=>l.url);
+    const images=[...imgData];
+    const dateVal=document.getElementById('edate').value;
+    const titleVal=document.getElementById('etitle').value.trim();
+    const contentVal=document.getElementById('econtent').value.trim();
+    const emojiVal=(document.getElementById('eemoji').value)||'📖';
+    const body={date:dateVal,title:titleVal||dateVal||'日志',content:contentVal,emoji:emojiVal,tags:[],images,links,pinned:false};
     let r;
-    if(id){
-      // 更新：PATCH 保留现有 pinned 状态
-      const cached = _cachedList.find(e => e.id === id);
-      if(cached) body.pinned = cached.pinned;
-      r = await fetch('tables/diary_entries/' + id, {
-        method: 'PUT',
-        headers: {'Content-Type':'application/json'},
-        body: JSON.stringify(body)
-      });
-    } else {
-      r = await fetch('tables/diary_entries', {
-        method: 'POST',
-        headers: {'Content-Type':'application/json'},
-        body: JSON.stringify(body)
-      });
-    }
-
-    if(r.ok){
-      const saved = await r.json();
-      closeEdit();
-      showToast(id ? 'UPDATED ✓' : 'SAVED ✓');
-      // saved 直接是条目对象（Table API 返回创建/更新的完整记录）
-      addOrUpdateLocal(Object.assign({}, saved, { images }));
-    } else {
-      showToast('保存失败');
-    }
-  } finally {
-    if(saveBtn){ saveBtn.textContent = 'SAVE'; saveBtn.disabled = false; }
-  }
+    if(id){const cached=_cachedList.find(e=>e.id===id);if(cached)body.pinned=cached.pinned;r=await fetch('tables/diary_entries/'+id,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});}
+    else{r=await fetch('tables/diary_entries',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});}
+    if(r.ok){const saved=await r.json();closeEdit();showToast(id?'UPDATED ✓':'SAVED ✓');addOrUpdateLocal(Object.assign({},saved,{images}));}
+    else{showToast('保存失败');}
+  }finally{if(saveBtn){saveBtn.textContent='SAVE';saveBtn.disabled=false;}}
 }
 
-/* =============================================
-   初始化
-   ============================================= */
 load();
 </script>
-<script src="https://www.genspark.ai/sandbox_inspect.js"></script></body>
+</body>
 </html>
