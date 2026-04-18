@@ -601,15 +601,10 @@ function shell(title: string, active: string, body: string, script = '') {
   }
 
   // ── Auth state ──
-  // check token expiry on load
-  (function(){
-    const exp = parseInt(localStorage.getItem('neko_token_exp')||'0');
-    if(exp && Date.now() > exp){
-      localStorage.removeItem('neko_token');
-      localStorage.removeItem('neko_token_exp');
-    }
-  })();
-  let _token = localStorage.getItem('neko_token') || '';
+  // Always start in logged-out state: clear token on every page load
+  localStorage.removeItem('neko_token');
+  localStorage.removeItem('neko_token_exp');
+  let _token = '';
   let _authMode = 'login'; // 'login' | 'changepwd'
 
   function isAuthed(){ return !!_token; }
@@ -1153,7 +1148,7 @@ hono.get('/', (c) => {
       reader.onload=function(ev){
         const img=new Image();
         img.onload=function(){
-          const MAX=1200;
+          const MAX=800;
           let w=img.width, h=img.height;
           if(w>MAX||h>MAX){
             if(w>h){ h=Math.round(h*MAX/w); w=MAX; }
@@ -1162,7 +1157,7 @@ hono.get('/', (c) => {
           const canvas=document.createElement('canvas');
           canvas.width=w; canvas.height=h;
           canvas.getContext('2d').drawImage(img,0,0,w,h);
-          cb(canvas.toDataURL('image/jpeg',0.72));
+          cb(canvas.toDataURL('image/jpeg',0.65));
         };
         img.src=ev.target.result;
       };
@@ -1425,6 +1420,8 @@ hono.get('/', (c) => {
       if(!isAuthed()){ showToast('请先解锁'); return; }
       const saveBtn=document.querySelector('#editOv .btn-p');
       if(saveBtn){ saveBtn.textContent='SAVING…'; saveBtn.disabled=true; }
+      // Show timeout warning if saving takes more than 8 seconds
+      const _saveWarnTimer=setTimeout(()=>showToast('正在保存，图片较多请耐心等待…'),8000);
       try{
         const id=document.getElementById('eid').value;
         const lrows=[...document.querySelectorAll('#elinks .link-row')];
@@ -1466,6 +1463,7 @@ hono.get('/', (c) => {
         else if(r.status===401){ handleAuthExpired(); }
         else { showToast('保存失败'); }
       } finally {
+        clearTimeout(_saveWarnTimer);
         if(saveBtn){ saveBtn.textContent='SAVE'; saveBtn.disabled=false; }
       }
     }
