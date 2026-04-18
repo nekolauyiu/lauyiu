@@ -1437,7 +1437,8 @@ hono.get('/', (c) => {
         const titleVal=document.getElementById('etitle').value.trim();
         const contentVal=document.getElementById('econtent').value.trim();
         // extract first emoji from title or content as the post icon
-        const _emojiReg=/\p{Emoji_Presentation}|\p{Extended_Pictographic}/gu;
+        // use a broad Unicode range match compatible with all environments
+        const _emojiReg=/[\u{1F300}-\u{1FAFF}]|[\u{2600}-\u{27BF}]|[\u{FE00}-\u{FEFF}]|[\u{1F000}-\u{1F02F}]|[\u{1F0A0}-\u{1F0FF}]|[\u{1F100}-\u{1F1FF}]|[\u{1F200}-\u{1F2FF}]|[\u{1F900}-\u{1F9FF}]|[\u{1FA00}-\u{1FA6F}]/u;
         const _titleEmoji=(titleVal.match(_emojiReg)||[])[0];
         const _contentEmoji=(contentVal.match(_emojiReg)||[])[0];
         const emojiVal=_titleEmoji||_contentEmoji||'📖';
