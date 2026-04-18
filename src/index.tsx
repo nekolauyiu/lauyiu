@@ -740,20 +740,23 @@ function shell(title: string, active: string, body: string, script = '') {
 
   // Auth overlay: clicking outside does NOT close the dialog (only CANCEL button closes it)
 
-  // init UI on page load - verify token validity with server
+  // init UI on page load
   applyAuthUI();
   (async function(){
     if(_token){
+      // verify existing token with server first
       try{
         const vr=await fetch('/api/verify',{headers:{'Authorization':'Bearer '+_token}});
         const vd=await vr.json();
         if(!vd.ok){
-          // token expired on server, clear local state silently
+          // token expired on server, clear local state
           _token=''; localStorage.removeItem('neko_token'); localStorage.removeItem('neko_token_exp');
-          applyAuthUI(); load();
+          applyAuthUI();
         }
-      }catch(e){ /* network error, keep token for now */ }
+      }catch(e){ /* network error, keep token */ }
     }
+    // always load entries regardless of auth state
+    load();
   })();
 
   ${script}
@@ -830,38 +833,43 @@ async function getPassword(kv: KVNamespace | undefined): Promise<string> {
   return DEFAULT_PWD
 }
 
-// ── Token store (in-memory, session-level) ──
-function generateToken(): string {
-  const arr = new Uint8Array(24)
-  crypto.getRandomValues(arr)
-  return Array.from(arr).map(b => b.toString(16).padStart(2,'0')).join('')
+// ── Self-contained signed token ──
+// Works across all Worker instances without KV.
+// Format: b64(exp) . hex(rand) . b64url(hmac)
+const TOKEN_SECRET = 'neko-diary-token-secret-2026'
+const TOKEN_TTL_MS = 30 * 60 * 1000  // 30 minutes
+
+async function hmacSign(data: string): Promise<string> {
+  const enc = new TextEncoder()
+  const key = await crypto.subtle.importKey(
+    'raw', enc.encode(TOKEN_SECRET),
+    { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']
+  )
+  const sig = await crypto.subtle.sign('HMAC', key, enc.encode(data))
+  return btoa(String.fromCharCode(...new Uint8Array(sig)))
+    .replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '')
 }
 
-// ── In-memory token store (fallback when KV is not available) ──
-const memTokens = new Set<string>()
-
-// ── Token stored in KV so all Worker instances share state ──
-async function createToken(kv: KVNamespace | undefined): Promise<string> {
-  const token = generateToken()
-  if (kv) {
-    // store token with 30-min TTL
-    await kv.put('token:' + token, '1', { expirationTtl: 1800 })
-  } else {
-    // no KV: store in-memory, expire after 1 hour
-    memTokens.add(token)
-    setTimeout(() => memTokens.delete(token), 30 * 60 * 1000)
-  }
-  return token
+async function createToken(_kv: KVNamespace | undefined): Promise<string> {
+  const exp = Date.now() + TOKEN_TTL_MS
+  const rand = Array.from(crypto.getRandomValues(new Uint8Array(16)))
+    .map(b => b.toString(16).padStart(2, '0')).join('')
+  const payload = exp + '.' + rand
+  const sig = await hmacSign(payload)
+  return btoa(String(exp)) + '.' + rand + '.' + sig
 }
 
-async function verifyToken(kv: KVNamespace | undefined, token: string): Promise<boolean> {
+async function verifyToken(_kv: KVNamespace | undefined, token: string): Promise<boolean> {
   if (!token) return false
-  if (kv) {
-    const val = await kv.get('token:' + token)
-    return val === '1'
-  }
-  // no KV: fall back to in-memory set
-  return memTokens.has(token)
+  try {
+    const parts = token.split('.')
+    if (parts.length !== 3) return false
+    const exp = parseInt(atob(parts[0]))
+    if (isNaN(exp) || Date.now() > exp) return false
+    const payload = exp + '.' + parts[1]
+    const expected = await hmacSign(payload)
+    return parts[2] === expected
+  } catch { return false }
 }
 
 // ── Auth middleware helper ──
@@ -933,7 +941,7 @@ hono.get('/', (c) => {
           <textarea id="econtent" placeholder="记录今天的行程、见闻与思考…"></textarea>
         </div>
         <div class="fg">
-          <label>EMOJI <span style="font-family:sans-serif;font-size:9px;opacity:.6;letter-spacing:0">— 点击将表情插入标题或内容的光标处</span></label>
+          <label>EMOJI</label>
           <div class="emoji-grid" id="emojiGrid">
             <span>😊</span><span>😂</span><span>🥰</span><span>😍</span><span>🤩</span>
             <span>😎</span><span>🥳</span><span>😢</span><span>😭</span><span>😤</span>
@@ -1014,11 +1022,13 @@ hono.get('/', (c) => {
     async function load(){
       try{
         const r=await fetch('/api/trips');
+        if(!r.ok){ render([]); return; }
         const d=await r.json();
         _cachedList=d.entries||[];
         render(_cachedList);
       }catch(err){
-        // silently handle fetch errors
+        // network error: show empty state instead of stuck "loading"
+        render([]);
       }
     }
 
