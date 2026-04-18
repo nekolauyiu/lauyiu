@@ -989,9 +989,11 @@ hono.get('/', (c) => {
           <div id="elinks"></div>
           <button class="btn btn-s" style="margin-top:8px;padding:8px 14px;font-size:6px" type="button" onclick="addLinkRow()">+ ADD LINK</button>
         </div>
+        <input type="hidden" id="epinned" value="0">
         <div class="btn-row" style="margin-top:22px">
           <button class="btn btn-p" onclick="saveEntry()">SAVE</button>
           <button class="btn btn-s" onclick="closeEdit()">CANCEL</button>
+          <button class="btn btn-s" id="editPinBtn" onclick="toggleEditPin()" style="display:none">📌 PIN</button>
           <button class="btn btn-d" id="editDelBtn" onclick="deleteCurrent()" style="margin-left:auto;display:none">DELETE</button>
         </div>
       </div>
@@ -1268,6 +1270,10 @@ hono.get('/', (c) => {
       _lastEmojiTarget = document.getElementById('econtent');
       imgData=[];
       renderImgPreview();
+      // reset pin state for new entry
+      document.getElementById('epinned').value='0';
+      const _epb=document.getElementById('editPinBtn');
+      if(_epb){ _epb.style.display='none'; _epb.textContent='📌 PIN'; }
       const _edb=document.getElementById('editDelBtn'); if(_edb) _edb.style.display='none';
       document.getElementById('editOv').classList.add('show');
     };
@@ -1455,6 +1461,15 @@ hono.get('/', (c) => {
         const wrap=document.getElementById('elinks');
         wrap.innerHTML='';
         (e.links||[]).forEach(function(l){addLinkRow(l.url);});
+        // restore pin state in edit form
+        document.getElementById('epinned').value=e.pinned?'1':'0';
+        const _epb=document.getElementById('editPinBtn');
+        if(_epb){
+          _epb.style.display='';
+          _epb.textContent=e.pinned?'📌 PINNED':'📌 PIN';
+          _epb.style.background=e.pinned?'rgba(160,112,96,.42)':'';
+          _epb.style.color=e.pinned?'#fff':'';
+        }
         document.getElementById('editTitle').textContent='EDIT ENTRY';
         document.getElementById('editOv').classList.add('show');
         applyAuthUI();
@@ -1482,6 +1497,27 @@ hono.get('/', (c) => {
       else { showToast('删除失败'); }
     }
 
+    function toggleEditPin(){
+      const inp=document.getElementById('epinned');
+      const btn=document.getElementById('editPinBtn');
+      const nowPinned=inp.value==='1';
+      if(!nowPinned){
+        // about to pin: check limit first
+        const selfId=document.getElementById('eid').value;
+        const pinCount=_cachedList.filter(function(e){return e.pinned && e.id!==selfId;}).length;
+        if(pinCount>=3){ showToast('最多只能置顶 3 条'); return; }
+        inp.value='1';
+        btn.textContent='📌 PINNED';
+        btn.style.background='rgba(160,112,96,.42)';
+        btn.style.color='#fff';
+      } else {
+        inp.value='0';
+        btn.textContent='📌 PIN';
+        btn.style.background='';
+        btn.style.color='';
+      }
+    }
+
     async function saveEntry(){
       if(!isAuthed()){ showToast('请先解锁'); return; }
       const saveBtn=document.querySelector('#editOv .btn-p');
@@ -1505,6 +1541,18 @@ hono.get('/', (c) => {
         const _titleEmoji=(titleVal.match(_emojiReg)||[])[0];
         const _contentEmoji=(contentVal.match(_emojiReg)||[])[0];
         const emojiVal=_titleEmoji||_contentEmoji||'📖';
+        const pinnedVal=document.getElementById('epinned').value==='1';
+        // Check pin limit before saving: count current pinned entries (excluding self)
+        if(pinnedVal){
+          const selfId=document.getElementById('eid').value;
+          const pinCount=_cachedList.filter(function(e){return e.pinned && e.id!==selfId;}).length;
+          if(pinCount>=3){
+            showToast('最多只能置顶 3 条');
+            clearTimeout(_saveWarnTimer);
+            if(saveBtn){ saveBtn.textContent='SAVE'; saveBtn.disabled=false; }
+            return;
+          }
+        }
         const body={
           date:dateVal,
           title:titleVal||dateVal||'日志',
@@ -1512,7 +1560,8 @@ hono.get('/', (c) => {
           emoji:emojiVal,
           tags:[],
           images,
-          links
+          links,
+          pinned:pinnedVal
         };
         const url=id?'/api/trips/'+id:'/api/trips';
         const r=await fetch(url,{
@@ -1527,7 +1576,10 @@ hono.get('/', (c) => {
           if(saved.entry) addOrUpdateLocal(saved.entry);
         }
         else if(r.status===401){ handleAuthExpired(); }
-        else { showToast('保存失败'); }
+        else {
+          const errD=await r.json().catch(function(){return {};});
+          showToast(errD.error==='max 3 pins'?'最多只能置顶 3 条':'保存失败');
+        }
       } finally {
         clearTimeout(_saveWarnTimer);
         if(saveBtn){ saveBtn.textContent='SAVE'; saveBtn.disabled=false; }
@@ -1587,6 +1639,13 @@ hono.post('/api/trips', async (c) => {
   const token = extractToken(c.req.raw)
   if (!await verifyToken(kv, token)) return c.json({ error: 'Unauthorized' }, 401)
   const b = await c.req.json<Partial<Entry>>()
+  // enforce max 3 pins on create
+  const wantPin = !!b.pinned
+  if (wantPin) {
+    const all = await getEntries(kv)
+    const pinCount = all.filter(e => e.pinned).length
+    if (pinCount >= 3) return c.json({ error: 'max 3 pins' }, 400)
+  }
   const now = new Date().toISOString()
   const entry: Entry = {
     id: `${Date.now()}-${Math.random().toString(36).slice(2,7)}`,
@@ -1597,6 +1656,7 @@ hono.post('/api/trips', async (c) => {
     tags: b.tags || [],
     images: b.images || [],
     links: b.links || [],
+    pinned: wantPin,
     createdAt: now,
     updatedAt: now,
   }
@@ -1612,6 +1672,12 @@ hono.put('/api/trips/:id', async (c) => {
   const old = await getEntry(kv, c.req.param('id'))
   if (!old) return c.json({ error: 'not found' }, 404)
   const b = await c.req.json<Partial<Entry>>()
+  // enforce max 3 pins on update (only when trying to pin a previously unpinned entry)
+  if (b.pinned && !old.pinned) {
+    const all = await getEntries(kv)
+    const pinCount = all.filter(e => e.pinned && e.id !== old.id).length
+    if (pinCount >= 3) return c.json({ error: 'max 3 pins' }, 400)
+  }
   const entry: Entry = { ...old, ...b, id: old.id, updatedAt: new Date().toISOString() }
   await putEntry(kv, entry)
   return c.json({ entry })
