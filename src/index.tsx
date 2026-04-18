@@ -703,8 +703,8 @@ function shell(title: string, active: string, body: string, script = '') {
         const d = await r.json();
         _token = d.token;
         localStorage.setItem('neko_token', _token);
-        localStorage.setItem('neko_token_exp', String(Date.now() + 60*60*1000));
-        setTimeout(function(){ _token=''; localStorage.removeItem('neko_token'); localStorage.removeItem('neko_token_exp'); applyAuthUI(); showToast('登录已过期，请重新解锁'); }, 60*60*1000);
+        localStorage.setItem('neko_token_exp', String(Date.now() + 30*60*1000));
+        setTimeout(function(){ _token=''; localStorage.removeItem('neko_token'); localStorage.removeItem('neko_token_exp'); applyAuthUI(); showToast('登录已过期，请重新解锁'); }, 30*60*1000);
         closeAuth();
         applyAuthUI();
         load();
@@ -844,12 +844,12 @@ const memTokens = new Set<string>()
 async function createToken(kv: KVNamespace | undefined): Promise<string> {
   const token = generateToken()
   if (kv) {
-    // store token with 60-min TTL
-    await kv.put('token:' + token, '1', { expirationTtl: 3600 })
+    // store token with 30-min TTL
+    await kv.put('token:' + token, '1', { expirationTtl: 1800 })
   } else {
     // no KV: store in-memory, expire after 1 hour
     memTokens.add(token)
-    setTimeout(() => memTokens.delete(token), 60 * 60 * 1000)
+    setTimeout(() => memTokens.delete(token), 30 * 60 * 1000)
   }
   return token
 }
@@ -933,9 +933,7 @@ hono.get('/', (c) => {
           <textarea id="econtent" placeholder="记录今天的行程、见闻与思考…"></textarea>
         </div>
         <div class="fg">
-          <input type="hidden" id="eemoji" value="📖">
-          <label>ICON <span style="font-family:sans-serif;font-size:9px;opacity:.6;letter-spacing:0">— 点击选择帖子图标（显示在标题前）</span></label>
-          <div id="emojiCurrent" style="font-size:28px;margin-bottom:8px;line-height:1">📖</div>
+          <label>EMOJI <span style="font-family:sans-serif;font-size:9px;opacity:.6;letter-spacing:0">— 点击将表情插入标题或内容的光标处</span></label>
           <div class="emoji-grid" id="emojiGrid">
             <span>😊</span><span>😂</span><span>🥰</span><span>😍</span><span>🤩</span>
             <span>😎</span><span>🥳</span><span>😢</span><span>😭</span><span>😤</span>
@@ -1175,30 +1173,45 @@ hono.get('/', (c) => {
       this.value='';
     });
 
-    // emoji picker: select post icon (does NOT insert into title/content)
+    // emoji picker: insert emoji at cursor position in title or content
+    // tracks last focused input between etitle / econtent
+    let _lastEmojiTarget = document.getElementById('econtent'); // default to content
+    document.getElementById('etitle').addEventListener('focus', function(){ _lastEmojiTarget = this; });
+    document.getElementById('etitle').addEventListener('click', function(){ _lastEmojiTarget = this; });
+    document.getElementById('etitle').addEventListener('keyup', function(){ _lastEmojiTarget = this; });
+    document.getElementById('econtent').addEventListener('focus', function(){ _lastEmojiTarget = this; });
+    document.getElementById('econtent').addEventListener('click', function(){ _lastEmojiTarget = this; });
+    document.getElementById('econtent').addEventListener('keyup', function(){ _lastEmojiTarget = this; });
+
     (function(){
       const grid=document.getElementById('emojiGrid');
-      const emojiInput=document.getElementById('eemoji');
-      const emojiCurrent=document.getElementById('emojiCurrent');
 
-      function setEmoji(emoji){
-        emojiInput.value=emoji;
-        emojiCurrent.textContent=emoji;
+      function insertEmojiAtCursor(emoji){
+        const el = _lastEmojiTarget;
+        if(!el) return;
+        const start = el.selectionStart != null ? el.selectionStart : el.value.length;
+        const end   = el.selectionEnd   != null ? el.selectionEnd   : el.value.length;
+        const before = el.value.substring(0, start);
+        const after  = el.value.substring(end);
+        el.value = before + emoji + after;
+        // restore cursor position right after inserted emoji
+        const pos = start + emoji.length;
+        el.setSelectionRange(pos, pos);
+        el.focus();
+        // flash highlight on clicked emoji briefly
         grid.querySelectorAll('span').forEach(function(s){ s.classList.remove('selected'); });
-        // highlight the matching span
-        for(const s of grid.querySelectorAll('span')){
-          if(s.textContent===emoji){ s.classList.add('selected'); break; }
-        }
       }
 
       grid.addEventListener('click',function(e){
         const t=e.target;
         if(t.tagName!=='SPAN') return;
-        setEmoji(t.textContent);
+        t.classList.add('selected');
+        setTimeout(function(){ t.classList.remove('selected'); }, 300);
+        insertEmojiAtCursor(t.textContent);
       });
 
-      // expose helper for use in fabBtn / editCurrent
-      window._setPostEmoji=setEmoji;
+      // keep backward compat (no-op now, icon field removed)
+      window._setPostEmoji=function(){};
     })();
 
     // open new entry
@@ -1210,8 +1223,7 @@ hono.get('/', (c) => {
       document.getElementById('elinks').innerHTML='';
       const _td=new Date(); document.getElementById('edate').value=_td.getFullYear()+'-'+String(_td.getMonth()+1).padStart(2,'0')+'-'+String(_td.getDate()).padStart(2,'0');
       document.getElementById('editTitle').textContent='NEW ENTRY';
-      // reset emoji to default
-      if(window._setPostEmoji) window._setPostEmoji('📖');
+      _lastEmojiTarget = document.getElementById('econtent');
       imgData=[];
       renderImgPreview();
       const _edb=document.getElementById('editDelBtn'); if(_edb) _edb.style.display='none';
@@ -1375,7 +1387,7 @@ hono.get('/', (c) => {
         document.getElementById('edate').value=e.date;
         document.getElementById('etitle').value=e.title||'';
         document.getElementById('econtent').value=e.content;
-        if(window._setPostEmoji) window._setPostEmoji(e.emoji||'📖');
+        _lastEmojiTarget = document.getElementById('econtent');
         imgData=[...(e.images||[])];
         renderImgPreview();
         const wrap=document.getElementById('elinks');
@@ -1414,9 +1426,11 @@ hono.get('/', (c) => {
         const dateVal=document.getElementById('edate').value;
         const titleVal=document.getElementById('etitle').value.trim();
         const contentVal=document.getElementById('econtent').value.trim();
-        // extract first emoji from title or content as the post emoji
-        // extract first emoji (works in all environments)
-        const emojiVal=(document.getElementById('eemoji').value)||'📖';
+        // extract first emoji from title or content as the post icon
+        const _emojiReg=/\p{Emoji_Presentation}|\p{Extended_Pictographic}/gu;
+        const _titleEmoji=(titleVal.match(_emojiReg)||[])[0];
+        const _contentEmoji=(contentVal.match(_emojiReg)||[])[0];
+        const emojiVal=_titleEmoji||_contentEmoji||'📖';
         const body={
           date:dateVal,
           title:titleVal||dateVal||'日志',
