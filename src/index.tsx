@@ -933,7 +933,7 @@ hono.get('/', (c) => {
           <textarea id="econtent" placeholder="记录今天的行程、见闻与思考…"></textarea>
         </div>
         <div class="fg">
-          <label>EMOJI <span style="font-family:sans-serif;font-size:9px;opacity:.6;letter-spacing:0">— 点击将表情插入标题或内容的光标处</span></label>
+          <label>EMOJI</label>
           <div class="emoji-grid" id="emojiGrid">
             <span>😊</span><span>😂</span><span>🥰</span><span>😍</span><span>🤩</span>
             <span>😎</span><span>🥳</span><span>😢</span><span>😭</span><span>😤</span>
