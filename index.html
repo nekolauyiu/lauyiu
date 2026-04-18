@@ -538,7 +538,7 @@
       <div class="ph-title">MY DIARY</div>
       <div class="ph-sub" id="ds"></div>
     </div>
-    <div id="list"><div class="empty"><div class="ei">📖</div><p>加载中…</p></div></div>
+    <div id="list"><div class="empty"><div class="ei" style="font-size:32px;margin-bottom:12px">⏳</div><p style="font-family:'Press Start 2P',monospace;font-size:8px;line-height:2">LOADING…</p></div></div>
     <button class="fab" id="fabBtn" title="New Entry">+</button>
 
     <!-- New / Edit modal -->
@@ -837,8 +837,12 @@ let cid = null;
 let _cachedList = [];
 
 async function load(){
+  // 超时控制：8秒未响应则放弃，避免页面一直卡在「加载中」
+  const controller = new AbortController();
+  const timeoutId  = setTimeout(() => controller.abort(), 8000);
   try{
-    const r = await fetch('tables/diary_entries?limit=200');
+    const r = await fetch('tables/diary_entries?limit=200', { signal: controller.signal });
+    clearTimeout(timeoutId);
     const d = await r.json();
     const raw = d.data || [];
     // 转换为内部格式
@@ -863,7 +867,9 @@ async function load(){
     });
     render(_cachedList);
   } catch(err){
-    // silently handle
+    clearTimeout(timeoutId);
+    // 请求失败或超时 → 清除「加载中」状态，显示空列表
+    render([]);
   }
 }
 
@@ -1099,7 +1105,10 @@ function addLinkRow(url){
    ============================================= */
 async function view(id){
   try{
-    const r = await fetch('tables/diary_entries/' + id);
+    const ctrl2 = new AbortController();
+    const tid2  = setTimeout(() => ctrl2.abort(), 8000);
+    const r = await fetch('tables/diary_entries/' + id, { signal: ctrl2.signal });
+    clearTimeout(tid2);
     const e = await r.json();
     if(!e || !e.id) return;
     cid = id;
@@ -1326,9 +1335,12 @@ async function saveEntry(){
 }
 
 /* =============================================
-   初始化
+   初始化 — 先渲染空列表（页面立即可见），再异步加载数据
    ============================================= */
-load();
+// 立即清除"LOADING…"占位，显示空状态，让页面第一帧可见
+render([]);
+// 然后在下一个事件循环异步拉取数据，不阻塞首屏渲染
+setTimeout(load, 0);
 </script>
 <script src="https://www.genspark.ai/sandbox_inspect.js"></script></body>
 </html>
