@@ -740,20 +740,23 @@ function shell(title: string, active: string, body: string, script = '') {
 
   // Auth overlay: clicking outside does NOT close the dialog (only CANCEL button closes it)
 
-  // init UI on page load - verify token validity with server
+  // init UI on page load
   applyAuthUI();
   (async function(){
     if(_token){
+      // verify existing token with server first
       try{
         const vr=await fetch('/api/verify',{headers:{'Authorization':'Bearer '+_token}});
         const vd=await vr.json();
         if(!vd.ok){
-          // token expired on server, clear local state silently
+          // token expired on server, clear local state
           _token=''; localStorage.removeItem('neko_token'); localStorage.removeItem('neko_token_exp');
-          applyAuthUI(); load();
+          applyAuthUI();
         }
-      }catch(e){ /* network error, keep token for now */ }
+      }catch(e){ /* network error, keep token */ }
     }
+    // always load entries regardless of auth state
+    load();
   })();
 
   ${script}
@@ -1019,11 +1022,13 @@ hono.get('/', (c) => {
     async function load(){
       try{
         const r=await fetch('/api/trips');
+        if(!r.ok){ render([]); return; }
         const d=await r.json();
         _cachedList=d.entries||[];
         render(_cachedList);
       }catch(err){
-        // silently handle fetch errors
+        // network error: show empty state instead of stuck "loading"
+        render([]);
       }
     }
 
