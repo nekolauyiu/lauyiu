@@ -1,0 +1,1 @@
+{"detail":"File not found: js/app.js"}

@@ -1,0 +1,1241 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GitHub 同步 — lauyiu</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Inter:wght@300;400;500;600&family=Noto+Sans+SC:wght@300;400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    /* ---- GitHub 同步页面专属样式 ---- */
+    .sync-hero {
+      display: flex;
+      align-items: center;
+      gap: 18px;
+      margin-bottom: 8px;
+    }
+    .sync-hero-icon {
+      font-size: 2.6rem;
+      line-height: 1;
+    }
+    .sync-hero-text h1 { font-family: var(--font-serif); color: var(--accent); }
+    .sync-hero-text p  { color: var(--text-sub); font-size: .9rem; margin-top: 3px; }
+
+    /* 仓库信息条 */
+    .repo-info-bar {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: rgba(26,26,26,.06);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 11px 16px;
+      margin-bottom: 22px;
+      font-size: .88rem;
+      flex-wrap: wrap;
+    }
+    .repo-info-bar .repo-name {
+      font-weight: 600;
+      color: var(--text);
+      display: flex; align-items: center; gap: 6px;
+    }
+    .repo-info-bar .repo-branch {
+      display: flex; align-items: center; gap: 5px;
+      color: var(--text-sub);
+    }
+    .repo-info-bar .repo-link {
+      margin-left: auto;
+      font-size: .8rem;
+      color: var(--accent);
+      text-decoration: none;
+    }
+    .repo-info-bar .repo-link:hover { text-decoration: underline; }
+
+    /* Token 状态指示器 */
+    .token-status {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 14px;
+      border-radius: 10px;
+      font-size: .88rem;
+      margin-bottom: 18px;
+    }
+    .token-status.ok     { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+    .token-status.err    { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+    .token-status.empty  { background: #fff3cd; color: #856404; border: 1px solid #ffeeba; }
+    .token-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+    .token-dot.ok  { background: #28a745; }
+    .token-dot.err { background: #dc3545; }
+    .token-dot.empty { background: #ffc107; }
+
+    /* 步骤引导 */
+    .step-guide {
+      counter-reset: step;
+      list-style: none;
+      margin-bottom: 20px;
+    }
+    .step-guide li {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--border);
+      font-size: .9rem;
+      color: var(--text-sub);
+    }
+    .step-guide li:last-child { border-bottom: none; }
+    .step-guide li::before {
+      counter-increment: step;
+      content: counter(step);
+      min-width: 24px; height: 24px;
+      background: var(--accent);
+      color: #fff;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: .78rem; font-weight: 700;
+      flex-shrink: 0;
+    }
+    .step-guide li.done::before { background: #28a745; content: '✓'; }
+    .step-guide li a { color: var(--accent); }
+
+    /* 提交模板选择器 */
+    .template-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+    .template-chip {
+      background: rgba(139,111,71,.1);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 5px 14px;
+      font-size: .83rem;
+      cursor: pointer;
+      color: var(--text-sub);
+      transition: .15s;
+      user-select: none;
+    }
+    .template-chip:hover,
+    .template-chip.selected {
+      background: var(--accent);
+      color: #fff;
+      border-color: var(--accent);
+    }
+
+    /* 文件选择区 */
+    .file-select-actions {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 10px;
+      align-items: center;
+    }
+    .file-select-actions button {
+      background: transparent;
+      border: 1px solid var(--border);
+      border-radius: 7px;
+      padding: 4px 12px;
+      font-size: .8rem;
+      cursor: pointer;
+      color: var(--text-sub);
+      transition: .15s;
+      font-family: var(--font-sans);
+    }
+    .file-select-actions button:hover { background: var(--bg); color: var(--accent); }
+    .file-count { margin-left: auto; font-size: .82rem; color: var(--text-sub); }
+
+    /* 推送结果区 */
+    .push-result {
+      display: none;
+      margin-top: 16px;
+    }
+    .push-result.visible { display: block; }
+
+    /* 历史条目状态点 */
+    .commit-status {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: #28a745;
+      flex-shrink: 0;
+      margin-top: 7px;
+    }
+
+    /* 快速操作按钮区 */
+    .quick-actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-bottom: 22px;
+    }
+    .quick-btn {
+      flex: 1;
+      min-width: 140px;
+      padding: 14px 16px;
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      background: var(--bg-card);
+      cursor: pointer;
+      text-align: center;
+      transition: .2s;
+      font-family: var(--font-sans);
+    }
+    .quick-btn:hover {
+      border-color: var(--accent2);
+      box-shadow: 0 4px 16px rgba(139,111,71,.12);
+      transform: translateY(-1px);
+    }
+    .quick-btn .quick-icon { font-size: 1.6rem; margin-bottom: 6px; }
+    .quick-btn .quick-label { font-size: .85rem; color: var(--text-sub); }
+    .quick-btn .quick-name { font-weight: 600; font-size: .9rem; color: var(--text); }
+
+    /* 推送进度 */
+    .push-steps {
+      list-style: none;
+      margin: 12px 0;
+    }
+    .push-step {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 6px 0;
+      font-size: .88rem;
+      color: var(--text-sub);
+    }
+    .push-step .step-icon { width: 20px; text-align: center; font-size: .9rem; }
+    .push-step.done   .step-icon { color: #28a745; }
+    .push-step.active .step-icon { color: var(--accent2); }
+    .push-step.err    .step-icon { color: #dc3545; }
+    .push-step.done   { color: var(--text); }
+    .push-step.err    { color: #dc3545; }
+
+    /* 响应式 */
+    @media (max-width: 540px) {
+      .quick-btn { min-width: 110px; }
+      .repo-info-bar { font-size: .82rem; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- 顶部导航 -->
+<header class="site-header">
+  <a href="index.html" class="logo">📖 neko daily</a>
+  <nav>
+    <a href="index.html">日记</a>
+    <a href="contact.html">联系</a>
+    <a href="github-sync.html" class="active btn-github"><i class="fab fa-github"></i> GitHub 同步</a>
+  </nav>
+</header>
+
+<main class="site-main" style="max-width:860px;">
+
+  <!-- 页面标题 -->
+  <div class="sync-hero">
+    <div class="sync-hero-icon">🚀</div>
+    <div class="sync-hero-text">
+      <h1>GitHub 代码同步</h1>
+      <p>将网站代码一键推送到 GitHub 仓库，方便版本管理与迭代</p>
+    </div>
+  </div>
+
+  <!-- 仓库信息条（始终显示）-->
+  <div class="repo-info-bar">
+    <span class="repo-name">
+      <i class="fab fa-github"></i>
+      <span id="display-owner">nekolauyiu</span>/<span id="display-repo">lauyiu</span>
+    </span>
+    <span class="repo-branch">
+      <i class="fas fa-code-branch"></i>
+      <span id="display-branch">main</span>
+    </span>
+    <span id="token-ok-badge" style="display:none;" class="badge badge-success">✓ Token 已配置</span>
+    <span id="token-missing-badge" class="badge badge-warning">⚠ 需配置 Token</span>
+    <a href="https://github.com/nekolauyiu/lauyiu" target="_blank" rel="noopener" class="repo-link">
+      <i class="fas fa-external-link-alt"></i> 在 GitHub 查看
+    </a>
+  </div>
+
+  <!-- 标签切换 -->
+  <div class="tabs">
+    <button class="tab-btn active" onclick="switchTab('tab-push', this)">
+      <i class="fas fa-upload"></i> 推送代码
+    </button>
+    <button class="tab-btn" onclick="switchTab('tab-token', this)">
+      <i class="fas fa-key"></i> 配置 Token
+    </button>
+    <button class="tab-btn" onclick="switchTab('tab-history', this); loadHistory()">
+      <i class="fas fa-history"></i> 提交历史
+    </button>
+    <button class="tab-btn" onclick="switchTab('tab-settings', this)">
+      <i class="fas fa-cog"></i> 仓库设置
+    </button>
+  </div>
+
+  <!-- ========== 标签 1: 推送代码 ========== -->
+  <div id="tab-push" class="tab-panel active">
+
+    <!-- 快捷推送区 -->
+    <div class="card" style="margin-bottom:18px;">
+      <h3 style="font-size:1rem; margin-bottom:14px; color:var(--text-sub); font-weight:600;">
+        <i class="fas fa-bolt"></i> 快速推送模板
+      </h3>
+      <div class="quick-actions">
+        <button class="quick-btn" onclick="quickPush('update-ui')">
+          <div class="quick-icon">🎨</div>
+          <div class="quick-name">UI 更新</div>
+          <div class="quick-label">样式/页面调整</div>
+        </button>
+        <button class="quick-btn" onclick="quickPush('fix')">
+          <div class="quick-icon">🐛</div>
+          <div class="quick-name">Bug 修复</div>
+          <div class="quick-label">修复问题</div>
+        </button>
+        <button class="quick-btn" onclick="quickPush('feature')">
+          <div class="quick-icon">✨</div>
+          <div class="quick-name">新增功能</div>
+          <div class="quick-label">添加新特性</div>
+        </button>
+        <button class="quick-btn" onclick="quickPush('content')">
+          <div class="quick-icon">📝</div>
+          <div class="quick-name">内容更新</div>
+          <div class="quick-label">日记/文章内容</div>
+        </button>
+        <button class="quick-btn" onclick="quickPush('custom')">
+          <div class="quick-icon">⚙️</div>
+          <div class="quick-name">自定义</div>
+          <div class="quick-label">填写自定义消息</div>
+        </button>
+      </div>
+    </div>
+
+    <!-- 推送详情区 -->
+    <div class="card">
+      <h3 style="font-size:1rem; margin-bottom:18px; color:var(--text-sub); font-weight:600;">
+        <i class="fas fa-code-commit"></i> 提交详情
+      </h3>
+
+      <!-- Commit Message -->
+      <div class="field-group">
+        <label class="field-label">提交标题 <span style="color:#c0392b;">*</span></label>
+        <input type="text" id="commit-title" placeholder="例：更新首页样式" maxlength="72">
+      </div>
+      <div class="field-group">
+        <label class="field-label">提交描述（选填）</label>
+        <textarea id="commit-body" rows="3" placeholder="详细描述本次修改内容…（支持多行）"></textarea>
+      </div>
+
+      <!-- 快速消息模板 chips -->
+      <div class="field-group">
+        <label class="field-label">消息模板</label>
+        <div class="template-chips" id="template-chips">
+          <span class="template-chip" onclick="useTemplate(this, '更新首页样式与布局')">🎨 更新样式</span>
+          <span class="template-chip" onclick="useTemplate(this, '修复页面显示问题')">🐛 修复问题</span>
+          <span class="template-chip" onclick="useTemplate(this, '添加新功能模块')">✨ 新增功能</span>
+          <span class="template-chip" onclick="useTemplate(this, '更新文档与说明')">📝 更新文档</span>
+          <span class="template-chip" onclick="useTemplate(this, '优化代码结构与性能')">⚡ 性能优化</span>
+          <span class="template-chip" onclick="useTemplate(this, '优化移动端响应式布局')">📱 移动端优化</span>
+          <span class="template-chip" onclick="useTemplate(this, '同步 GitHub 同步工具更新')">🔄 同步更新</span>
+        </div>
+      </div>
+
+      <!-- 目标分支 -->
+      <div class="field-group">
+        <label class="field-label">目标分支</label>
+        <div style="display:flex; gap:8px; align-items:center;">
+          <input type="text" id="target-branch" value="main" style="max-width:180px;">
+          <button class="btn btn-secondary" onclick="loadBranches()" style="font-size:.82rem; padding:8px 12px;">
+            <i class="fas fa-sync-alt"></i> 拉取分支列表
+          </button>
+          <select id="branch-select" style="display:none; max-width:180px;" onchange="selectBranch(this.value)">
+          </select>
+        </div>
+        <p class="hint">默认分支：<code>main</code>（与 GitHub 仓库 <code>nekolauyiu/lauyiu</code> 一致）</p>
+      </div>
+
+      <hr class="divider">
+
+      <!-- 文件选择 -->
+      <div class="field-group">
+        <label class="field-label">选择要推送的文件</label>
+        <div class="file-select-actions">
+          <button onclick="selectAllFiles(true)">全选</button>
+          <button onclick="selectAllFiles(false)">取消全选</button>
+          <button onclick="selectHtmlFiles()">仅 HTML/CSS/JS</button>
+          <span class="file-count" id="file-count-label">已选 0 个文件</span>
+        </div>
+        <div id="file-list-wrap" style="max-height:280px; overflow-y:auto; border:1px solid var(--border); border-radius:10px; padding:4px 8px;">
+          <ul class="file-list" id="file-list">
+            <li style="padding:20px; text-align:center; color:var(--text-sub); font-size:.88rem;">
+              <i class="fas fa-spinner fa-spin"></i> 加载文件列表…
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- 选项 -->
+      <div class="field-group" style="display:flex; gap:20px; flex-wrap:wrap;">
+        <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-size:.9rem;">
+          <input type="checkbox" id="dry-run" style="width:16px; height:16px; accent-color:var(--accent); cursor:pointer;">
+          <span>预览模式（不实际推送）</span>
+        </label>
+        <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-size:.9rem;">
+          <input type="checkbox" id="auto-desc" checked style="width:16px; height:16px; accent-color:var(--accent); cursor:pointer;">
+          <span>自动补充时间戳到描述</span>
+        </label>
+      </div>
+
+      <!-- 推送按钮 -->
+      <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+        <button class="btn btn-dark" id="push-btn" onclick="startPush()">
+          <i class="fab fa-github"></i> 推送到 GitHub
+        </button>
+        <button class="btn btn-secondary" onclick="resetForm()">
+          <i class="fas fa-redo"></i> 重置
+        </button>
+        <span id="push-status-inline" style="font-size:.85rem; color:var(--text-sub);"></span>
+      </div>
+
+      <!-- 推送进度 & 结果 -->
+      <div class="push-result" id="push-result">
+        <hr class="divider">
+        <div class="progress-wrap"><div class="progress-bar" id="progress-bar"></div></div>
+        <ul class="push-steps" id="push-steps"></ul>
+        <div class="log-box" id="push-log"></div>
+        <div id="push-final-result"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== 标签 2: 配置 Token ========== -->
+  <div id="tab-token" class="tab-panel">
+    <div class="card">
+      <h2 class="page-title" style="font-size:1.4rem; margin-bottom:4px;">配置 GitHub Token</h2>
+      <p class="page-subtitle">Token 仅存储在本地浏览器，不会上传到任何服务器</p>
+
+      <!-- 当前状态 -->
+      <div id="token-status-block"></div>
+
+      <!-- 分步指南 -->
+      <div style="margin-bottom:20px;">
+        <label class="field-label" style="margin-bottom:10px;">如何获取 Token？</label>
+        <ul class="step-guide" id="token-steps">
+          <li>
+            打开 GitHub →
+            <a href="https://github.com/settings/tokens/new?scopes=repo&description=lauyiu-sync" target="_blank" rel="noopener">
+              创建新 Token（点击打开）
+            </a>
+            <span style="margin-left:4px; font-size:.78rem;">（需要登录 GitHub 账号）</span>
+          </li>
+          <li>
+            在 <strong>Note</strong> 填写名称（如 <code>lauyiu-sync</code>），
+            勾选 <strong>repo</strong> 权限，设置有效期（建议 90 天或无限期）
+          </li>
+          <li>点击页面最底部 <strong>Generate token</strong> 按钮，复制生成的 Token</li>
+          <li>将 Token 粘贴到下方输入框，点击保存并验证</li>
+        </ul>
+      </div>
+
+      <div class="field-group">
+        <label class="field-label">GitHub Personal Access Token</label>
+        <div style="display:flex; gap:8px;">
+          <input type="password" id="token-input" placeholder="ghp_xxxxxxxxxxxxxxxxxxxxxxxx" style="font-family:monospace;">
+          <button class="btn btn-secondary" onclick="toggleTokenVisible()" style="flex-shrink:0;">
+            <i class="fas fa-eye" id="token-eye-icon"></i>
+          </button>
+        </div>
+        <p class="hint">Token 以 <code>ghp_</code> 或 <code>github_pat_</code> 开头，需要 <code>repo</code> 权限</p>
+      </div>
+
+      <div style="display:flex; gap:10px; flex-wrap:wrap;">
+        <button class="btn btn-primary" onclick="saveToken()">
+          <i class="fas fa-save"></i> 保存 Token
+        </button>
+        <button class="btn btn-secondary" onclick="verifyToken()">
+          <i class="fas fa-check-circle"></i> 验证 Token
+        </button>
+        <button class="btn btn-danger" onclick="clearToken()">
+          <i class="fas fa-trash"></i> 清除 Token
+        </button>
+      </div>
+
+      <div id="token-verify-result" style="margin-top:14px;"></div>
+    </div>
+  </div>
+
+  <!-- ========== 标签 3: 提交历史 ========== -->
+  <div id="tab-history" class="tab-panel">
+    <div class="card">
+      <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:18px; flex-wrap:wrap; gap:10px;">
+        <div>
+          <h2 class="page-title" style="font-size:1.4rem; margin-bottom:2px;">提交历史</h2>
+          <p style="color:var(--text-sub); font-size:.88rem;">最近 20 条提交记录 · 来自 GitHub</p>
+        </div>
+        <button class="btn btn-secondary" onclick="loadHistory()">
+          <i class="fas fa-sync-alt"></i> 刷新
+        </button>
+      </div>
+      <div id="history-list">
+        <div style="text-align:center; padding:40px; color:var(--text-sub);">
+          <i class="fas fa-spinner fa-spin"></i> 点击刷新加载历史记录…
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== 标签 4: 仓库设置 ========== -->
+  <div id="tab-settings" class="tab-panel">
+    <div class="card">
+      <h2 class="page-title" style="font-size:1.4rem; margin-bottom:4px;">仓库设置</h2>
+      <p class="page-subtitle">自定义仓库信息（修改后自动保存到本地）</p>
+
+      <div class="alert alert-info">
+        <span class="alert-icon">ℹ️</span>
+        <div>已为你预设了仓库 <strong>nekolauyiu/lauyiu</strong>，分支 <strong>main</strong>。如无需更改可直接使用。</div>
+      </div>
+
+      <div class="field-group">
+        <label class="field-label">GitHub 用户名</label>
+        <input type="text" id="set-owner" placeholder="例：nekolauyiu">
+        <p class="hint">你的 GitHub 账号用户名</p>
+      </div>
+      <div class="field-group">
+        <label class="field-label">仓库名称</label>
+        <input type="text" id="set-repo" placeholder="例：lauyiu">
+        <p class="hint">GitHub 仓库名（不含 .git 后缀）</p>
+      </div>
+      <div class="field-group">
+        <label class="field-label">默认分支</label>
+        <input type="text" id="set-branch" placeholder="main">
+        <p class="hint">通常为 <code>main</code> 或 <code>master</code></p>
+      </div>
+      <div class="field-group">
+        <label class="field-label">提交者姓名</label>
+        <input type="text" id="set-committer-name" placeholder="neko">
+      </div>
+      <div class="field-group">
+        <label class="field-label">提交者邮箱</label>
+        <input type="email" id="set-committer-email" placeholder="1129350913@qq.com">
+      </div>
+
+      <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:6px;">
+        <button class="btn btn-primary" onclick="saveSettings()">
+          <i class="fas fa-save"></i> 保存设置
+        </button>
+        <button class="btn btn-secondary" onclick="resetSettings()">
+          <i class="fas fa-undo"></i> 恢复默认
+        </button>
+      </div>
+      <div id="settings-result" style="margin-top:14px;"></div>
+    </div>
+
+    <!-- 快捷链接 -->
+    <div class="card">
+      <h3 style="font-size:.95rem; font-weight:600; color:var(--text-sub); margin-bottom:14px;">🔗 快捷链接</h3>
+      <div style="display:flex; flex-direction:column; gap:10px;">
+        <a href="https://github.com/nekolauyiu/lauyiu" target="_blank" rel="noopener" class="btn btn-secondary" style="text-decoration:none; display:inline-flex; width:fit-content;">
+          <i class="fab fa-github"></i> 在 GitHub 查看仓库
+        </a>
+        <a href="https://github.com/nekolauyiu/lauyiu/commits/main" target="_blank" rel="noopener" class="btn btn-secondary" style="text-decoration:none; display:inline-flex; width:fit-content;">
+          <i class="fas fa-history"></i> 查看 main 分支提交历史
+        </a>
+        <a href="https://github.com/settings/tokens/new?scopes=repo&description=lauyiu-sync" target="_blank" rel="noopener" class="btn btn-secondary" style="text-decoration:none; display:inline-flex; width:fit-content;">
+          <i class="fas fa-key"></i> 创建 GitHub Token
+        </a>
+        <a href="https://lauyiu.com" target="_blank" rel="noopener" class="btn btn-secondary" style="text-decoration:none; display:inline-flex; width:fit-content;">
+          <i class="fas fa-globe"></i> 查看线上网站 lauyiu.com
+        </a>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<!-- 推送确认弹窗 -->
+<div class="modal-overlay" id="confirm-push-modal">
+  <div class="modal-box">
+    <div class="modal-title">🚀 确认推送</div>
+    <div class="modal-body" id="confirm-push-body"></div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeModal('confirm-push-modal')">取消</button>
+      <button class="btn btn-dark" onclick="executePush()"><i class="fab fa-github"></i> 确认推送</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* =============================================
+   默认配置（已预设 lauyiu 仓库）
+   ============================================= */
+const DEFAULTS = {
+  owner:          'nekolauyiu',
+  repo:           'lauyiu',
+  branch:         'main',
+  committerName:  'neko',
+  committerEmail: '1129350913@qq.com',
+};
+
+// 提交消息模板
+const COMMIT_TEMPLATES = {
+  'update-ui': { title: '🎨 更新页面样式与布局',   body: '调整 UI 组件样式，改善用户体验' },
+  'fix':       { title: '🐛 修复页面显示问题',      body: '修复已知 Bug，提升稳定性' },
+  'feature':   { title: '✨ 新增功能模块',           body: '添加新特性，扩展网站功能' },
+  'content':   { title: '📝 更新日记内容',           body: '更新网站内容与文案' },
+  'custom':    { title: '',                          body: '' },
+};
+
+/* =============================================
+   工具函数
+   ============================================= */
+function getConfig() {
+  const saved = JSON.parse(localStorage.getItem('gh_config') || '{}');
+  return { ...DEFAULTS, ...saved };
+}
+
+function getToken() {
+  return localStorage.getItem('gh_token') || '';
+}
+
+function openModal(id) {
+  document.getElementById(id).classList.add('open');
+}
+function closeModal(id) {
+  document.getElementById(id).classList.remove('open');
+}
+
+function showAlert(containerId, type, msg) {
+  const icons = { success: '✅', danger: '❌', info: 'ℹ️', warning: '⚠️' };
+  document.getElementById(containerId).innerHTML = `
+    <div class="alert alert-${type}">
+      <span class="alert-icon">${icons[type] || 'ℹ️'}</span>
+      <div>${msg}</div>
+    </div>
+  `;
+}
+
+/* =============================================
+   标签切换
+   ============================================= */
+function switchTab(id, btn) {
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  btn.classList.add('active');
+}
+
+/* =============================================
+   初始化
+   ============================================= */
+document.addEventListener('DOMContentLoaded', () => {
+  loadSettings();
+  updateHeaderBadge();
+  renderProjectFiles();
+  prefillToken();
+});
+
+function updateHeaderBadge() {
+  const token = getToken();
+  const cfg = getConfig();
+  document.getElementById('display-owner').textContent = cfg.owner;
+  document.getElementById('display-repo').textContent  = cfg.repo;
+  document.getElementById('display-branch').textContent = cfg.branch;
+  if (token) {
+    document.getElementById('token-ok-badge').style.display = 'inline-block';
+    document.getElementById('token-missing-badge').style.display = 'none';
+  } else {
+    document.getElementById('token-ok-badge').style.display = 'none';
+    document.getElementById('token-missing-badge').style.display = 'inline-block';
+  }
+}
+
+function prefillToken() {
+  const t = getToken();
+  if (t) document.getElementById('token-input').value = t;
+  renderTokenStatus();
+}
+
+function renderTokenStatus() {
+  const t = getToken();
+  const el = document.getElementById('token-status-block');
+  if (!el) return;
+  if (t) {
+    const masked = t.substring(0, 6) + '••••••••••••••' + t.substring(t.length - 4);
+    el.innerHTML = `
+      <div class="token-status ok">
+        <div class="token-dot ok"></div>
+        <div>Token 已配置：<code>${masked}</code></div>
+      </div>
+    `;
+  } else {
+    el.innerHTML = `
+      <div class="token-status empty">
+        <div class="token-dot empty"></div>
+        <div>尚未配置 Token，请按下方步骤获取并配置</div>
+      </div>
+    `;
+  }
+}
+
+/* =============================================
+   Token 管理
+   ============================================= */
+function saveToken() {
+  const t = document.getElementById('token-input').value.trim();
+  if (!t) { showAlert('token-verify-result', 'warning', '请输入 Token'); return; }
+  localStorage.setItem('gh_token', t);
+  renderTokenStatus();
+  updateHeaderBadge();
+  showAlert('token-verify-result', 'success', 'Token 已保存到本地浏览器！建议点击「验证 Token」确认权限。');
+}
+
+async function verifyToken() {
+  const t = getToken();
+  if (!t) { showAlert('token-verify-result', 'warning', '请先保存 Token'); return; }
+  showAlert('token-verify-result', 'info', '<i class="fas fa-spinner fa-spin"></i> 验证中…');
+  try {
+    const cfg = getConfig();
+    const res = await fetch(`https://api.github.com/repos/${cfg.owner}/${cfg.repo}`, {
+      headers: { Authorization: `Bearer ${t}`, Accept: 'application/vnd.github.v3+json' }
+    });
+    if (res.ok) {
+      const data = await res.json();
+      showAlert('token-verify-result', 'success',
+        `✅ 验证成功！仓库：<strong>${data.full_name}</strong>，权限：<strong>${data.permissions ? Object.keys(data.permissions).filter(k => data.permissions[k]).join(', ') : '读写'}</strong>`);
+    } else {
+      const err = await res.json();
+      showAlert('token-verify-result', 'danger', `验证失败（${res.status}）：${err.message}`);
+    }
+  } catch(e) {
+    showAlert('token-verify-result', 'danger', '网络错误：' + e.message);
+  }
+}
+
+function clearToken() {
+  if (!confirm('确定清除已保存的 Token？')) return;
+  localStorage.removeItem('gh_token');
+  document.getElementById('token-input').value = '';
+  renderTokenStatus();
+  updateHeaderBadge();
+  showAlert('token-verify-result', 'info', 'Token 已清除');
+}
+
+function toggleTokenVisible() {
+  const inp = document.getElementById('token-input');
+  const icon = document.getElementById('token-eye-icon');
+  if (inp.type === 'password') {
+    inp.type = 'text';
+    icon.className = 'fas fa-eye-slash';
+  } else {
+    inp.type = 'password';
+    icon.className = 'fas fa-eye';
+  }
+}
+
+/* =============================================
+   仓库设置
+   ============================================= */
+function loadSettings() {
+  const cfg = getConfig();
+  document.getElementById('set-owner').value          = cfg.owner;
+  document.getElementById('set-repo').value           = cfg.repo;
+  document.getElementById('set-branch').value         = cfg.branch;
+  document.getElementById('set-committer-name').value = cfg.committerName;
+  document.getElementById('set-committer-email').value = cfg.committerEmail;
+  document.getElementById('target-branch').value = cfg.branch;
+}
+
+function saveSettings() {
+  const cfg = {
+    owner:          document.getElementById('set-owner').value.trim()          || DEFAULTS.owner,
+    repo:           document.getElementById('set-repo').value.trim()           || DEFAULTS.repo,
+    branch:         document.getElementById('set-branch').value.trim()         || DEFAULTS.branch,
+    committerName:  document.getElementById('set-committer-name').value.trim() || DEFAULTS.committerName,
+    committerEmail: document.getElementById('set-committer-email').value.trim()|| DEFAULTS.committerEmail,
+  };
+  localStorage.setItem('gh_config', JSON.stringify(cfg));
+  document.getElementById('target-branch').value = cfg.branch;
+  updateHeaderBadge();
+  showAlert('settings-result', 'success', '✅ 设置已保存！');
+}
+
+function resetSettings() {
+  localStorage.removeItem('gh_config');
+  loadSettings();
+  updateHeaderBadge();
+  showAlert('settings-result', 'info', '已恢复默认设置（nekolauyiu/lauyiu · main）');
+}
+
+/* =============================================
+   文件列表（模拟项目文件结构）
+   ============================================= */
+// 这里列出网站的典型文件，实际推送时从 GitHub API 获取
+const PROJECT_FILES = [
+  { path: 'index.html',          label: '日记主页',          ext: 'html' },
+  { path: 'contact.html',        label: '联系页面',          ext: 'html' },
+  { path: 'github-sync.html',    label: 'GitHub 同步工具',   ext: 'html' },
+  { path: 'css/style.css',       label: '全局样式',          ext: 'css'  },
+  { path: 'js/app.js',           label: '主程序脚本',        ext: 'js'   },
+  { path: 'README.md',           label: '项目说明文档',      ext: 'md'   },
+];
+
+let selectedFiles = new Set(PROJECT_FILES.map(f => f.path));
+
+function renderProjectFiles() {
+  const ul = document.getElementById('file-list');
+  ul.innerHTML = PROJECT_FILES.map(f => {
+    const extIcon = { html:'🌐', css:'🎨', js:'⚡', md:'📝' };
+    const icon = extIcon[f.ext] || '📄';
+    return `
+      <li class="file-item" onclick="toggleFile('${f.path}', this)">
+        <input type="checkbox" id="file-${f.path.replace(/\//g,'-')}"
+               ${selectedFiles.has(f.path) ? 'checked' : ''}
+               onclick="event.stopPropagation(); toggleFile('${f.path}', this.closest('li'))">
+        <label for="file-${f.path.replace(/\//g,'-')}" onclick="event.stopPropagation();">
+          ${icon} ${f.path} <span style="color:var(--text-sub); font-weight:400;">— ${f.label}</span>
+        </label>
+      </li>
+    `;
+  }).join('');
+  updateFileCount();
+}
+
+function toggleFile(path, li) {
+  const cb = li.querySelector('input[type="checkbox"]');
+  cb.checked = !cb.checked;
+  if (cb.checked) selectedFiles.add(path);
+  else selectedFiles.delete(path);
+  updateFileCount();
+}
+
+function selectAllFiles(val) {
+  document.querySelectorAll('#file-list input[type="checkbox"]').forEach(cb => {
+    cb.checked = val;
+    const path = cb.id.replace('file-', '').replace(/-/g, '/');
+    // 重建 path（简化：直接从数据遍历）
+  });
+  if (val) { PROJECT_FILES.forEach(f => selectedFiles.add(f.path)); }
+  else     { selectedFiles.clear(); }
+  updateFileCount();
+}
+
+function selectHtmlFiles() {
+  selectedFiles.clear();
+  PROJECT_FILES.forEach(f => {
+    if (['html','css','js'].includes(f.ext)) selectedFiles.add(f.path);
+  });
+  document.querySelectorAll('#file-list input[type="checkbox"]').forEach(cb => {
+    const li = cb.closest('li');
+    const label = li.querySelector('label').textContent;
+    const isWebFile = ['🌐','🎨','⚡'].some(icon => label.includes(icon));
+    cb.checked = isWebFile;
+  });
+  updateFileCount();
+}
+
+function updateFileCount() {
+  document.getElementById('file-count-label').textContent = `已选 ${selectedFiles.size} 个文件`;
+}
+
+/* =============================================
+   拉取分支列表
+   ============================================= */
+async function loadBranches() {
+  const t = getToken();
+  const cfg = getConfig();
+  if (!t) { alert('请先配置 GitHub Token（见「配置 Token」标签）'); return; }
+  try {
+    const res = await fetch(`https://api.github.com/repos/${cfg.owner}/${cfg.repo}/branches`, {
+      headers: { Authorization: `Bearer ${t}`, Accept: 'application/vnd.github.v3+json' }
+    });
+    const branches = await res.json();
+    const sel = document.getElementById('branch-select');
+    sel.innerHTML = branches.map(b => `<option value="${b.name}">${b.name}</option>`).join('');
+    sel.value = cfg.branch;
+    sel.style.display = 'block';
+  } catch(e) {
+    alert('拉取分支失败：' + e.message);
+  }
+}
+
+function selectBranch(val) {
+  document.getElementById('target-branch').value = val;
+}
+
+/* =============================================
+   消息模板
+   ============================================= */
+function useTemplate(el, msg) {
+  document.querySelectorAll('.template-chip').forEach(c => c.classList.remove('selected'));
+  el.classList.add('selected');
+  document.getElementById('commit-title').value = msg;
+}
+
+/* =============================================
+   快速推送（预设模板）
+   ============================================= */
+function quickPush(type) {
+  const tpl = COMMIT_TEMPLATES[type];
+  document.getElementById('commit-title').value = tpl.title;
+  document.getElementById('commit-body').value  = tpl.body;
+  // 滚动到提交详情区
+  document.getElementById('push-btn').scrollIntoView({ behavior: 'smooth', block: 'center' });
+  document.getElementById('commit-title').focus();
+}
+
+/* =============================================
+   推送流程
+   ============================================= */
+let pendingPushData = null;
+
+function startPush() {
+  const title = document.getElementById('commit-title').value.trim();
+  if (!title) { alert('请填写提交标题'); document.getElementById('commit-title').focus(); return; }
+  if (selectedFiles.size === 0) { alert('请至少选择一个文件'); return; }
+
+  const token = getToken();
+  if (!token) {
+    alert('请先配置 GitHub Token！\n\n点击「配置 Token」标签获取帮助。');
+    switchTab('tab-token', document.querySelectorAll('.tab-btn')[1]);
+    return;
+  }
+
+  const cfg = getConfig();
+  const branch = document.getElementById('target-branch').value.trim() || cfg.branch;
+  let body = document.getElementById('commit-body').value.trim();
+  if (document.getElementById('auto-desc').checked) {
+    const ts = new Date().toLocaleString('zh-CN');
+    body = body ? `${body}\n\n🕐 推送时间：${ts}` : `🕐 推送时间：${ts}`;
+  }
+  const dryRun = document.getElementById('dry-run').checked;
+
+  pendingPushData = { title, body, branch, token, cfg, dryRun, files: Array.from(selectedFiles) };
+
+  const fileCount = selectedFiles.size;
+  const repoStr = `${cfg.owner}/${cfg.repo}@${branch}`;
+  document.getElementById('confirm-push-body').innerHTML = `
+    <div style="font-size:.9rem; color:var(--text-sub); line-height:1.8;">
+      <div>📁 <strong>仓库：</strong> ${repoStr}</div>
+      <div>📝 <strong>提交信息：</strong> ${escHtml(title)}</div>
+      <div>📂 <strong>文件数量：</strong> ${fileCount} 个文件</div>
+      ${dryRun ? '<div>⚠️ <strong style="color:#856404;">预览模式：不会实际推送</strong></div>' : ''}
+    </div>
+  `;
+  openModal('confirm-push-modal');
+}
+
+async function executePush() {
+  closeModal('confirm-push-modal');
+  if (!pendingPushData) return;
+  const { title, body, branch, token, cfg, dryRun, files } = pendingPushData;
+
+  // 显示进度区
+  const resultEl = document.getElementById('push-result');
+  resultEl.classList.add('visible');
+  const stepsEl  = document.getElementById('push-steps');
+  const logEl    = document.getElementById('push-log');
+  const finalEl  = document.getElementById('push-final-result');
+  logEl.innerHTML = '';
+  stepsEl.innerHTML = '';
+  finalEl.innerHTML = '';
+  document.getElementById('progress-bar').style.width = '0%';
+  document.getElementById('push-btn').disabled = true;
+  document.getElementById('push-status-inline').textContent = '推送中…';
+  resultEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+  const stepDefs = [
+    { id: 's1', label: '连接 GitHub API' },
+    { id: 's2', label: '获取仓库 HEAD 信息' },
+    { id: 's3', label: `上传文件（${files.length} 个）` },
+    { id: 's4', label: '创建 Tree 对象' },
+    { id: 's5', label: '创建 Commit 对象' },
+    { id: 's6', label: '更新分支引用' },
+  ];
+
+  function renderSteps(activeId, doneIds = [], errId = null) {
+    stepsEl.innerHTML = stepDefs.map(s => {
+      let cls = '', icon = '○';
+      if (doneIds.includes(s.id))  { cls = 'done';   icon = '✓'; }
+      if (s.id === activeId)        { cls = 'active'; icon = '⟳'; }
+      if (s.id === errId)           { cls = 'err';    icon = '✕'; }
+      return `<li class="push-step ${cls}"><span class="step-icon">${icon}</span>${s.label}</li>`;
+    }).join('');
+  }
+
+  function addLog(type, msg) {
+    logEl.innerHTML += `<div class="log-${type}">[${new Date().toLocaleTimeString()}] ${msg}</div>`;
+    logEl.scrollTop = logEl.scrollHeight;
+  }
+
+  function setProgress(pct) {
+    document.getElementById('progress-bar').style.width = pct + '%';
+  }
+
+  const doneIds = [];
+
+  try {
+    if (dryRun) {
+      addLog('warn', '⚠ 预览模式：以下为模拟推送流程（不会实际提交）');
+      for (let i = 0; i < stepDefs.length; i++) {
+        renderSteps(stepDefs[i].id, doneIds);
+        addLog('info', `[预览] ${stepDefs[i].label}`);
+        await delay(300);
+        doneIds.push(stepDefs[i].id);
+        setProgress(Math.round((i+1) / stepDefs.length * 100));
+      }
+      renderSteps(null, doneIds);
+      addLog('ok', '✅ 预览完成！实际推送时取消勾选"预览模式"即可。');
+      finalEl.innerHTML = `<div class="alert alert-warning" style="margin-top:12px;"><span class="alert-icon">⚠️</span><div>预览模式完成，未实际推送到 GitHub</div></div>`;
+      document.getElementById('push-btn').disabled = false;
+      document.getElementById('push-status-inline').textContent = '';
+      return;
+    }
+
+    // Step 1: 连接
+    renderSteps('s1', doneIds);
+    addLog('info', `连接 GitHub API → ${cfg.owner}/${cfg.repo}`);
+    setProgress(8);
+    await delay(200);
+    doneIds.push('s1');
+
+    // Step 2: 获取 HEAD
+    renderSteps('s2', doneIds);
+    addLog('info', `获取分支 ${branch} 的 HEAD Commit SHA…`);
+    const refRes = await ghApi(`git/ref/heads/${branch}`, token, cfg);
+    if (!refRes.ok) {
+      const e = await refRes.json();
+      throw new Error(`获取 HEAD 失败：${e.message}`);
+    }
+    const refData = await refRes.json();
+    const headSHA   = refData.object.sha;
+    const treeSHA   = await getTreeSHA(headSHA, token, cfg);
+    addLog('ok', `HEAD Commit: ${headSHA.substring(0,7)}`);
+    setProgress(20);
+    doneIds.push('s2');
+
+    // Step 3: 上传文件
+    renderSteps('s3', doneIds);
+    const blobs = [];
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      addLog('info', `上传文件 ${i+1}/${files.length}: ${file}`);
+      // 这里用 fetch 获取当前页面的文件内容（相对路径）
+      let content = '';
+      try {
+        const fc = await fetch(file);
+        content = await fc.text();
+      } catch {
+        addLog('warn', `无法读取 ${file}（跳过）`);
+        continue;
+      }
+      const blobRes = await ghApi('git/blobs', token, cfg, 'POST', {
+        content: btoa(unescape(encodeURIComponent(content))),
+        encoding: 'base64'
+      });
+      if (!blobRes.ok) {
+        const e = await blobRes.json();
+        throw new Error(`上传 ${file} 失败：${e.message}`);
+      }
+      const blobData = await blobRes.json();
+      blobs.push({ path: file, mode: '100644', type: 'blob', sha: blobData.sha });
+      addLog('ok', `✓ ${file} → blob ${blobData.sha.substring(0,7)}`);
+      setProgress(20 + Math.round((i+1) / files.length * 40));
+    }
+    doneIds.push('s3');
+
+    // Step 4: 创建 Tree
+    renderSteps('s4', doneIds);
+    addLog('info', `创建 Git Tree 对象…`);
+    const treeRes = await ghApi('git/trees', token, cfg, 'POST', {
+      base_tree: treeSHA,
+      tree: blobs
+    });
+    if (!treeRes.ok) {
+      const e = await treeRes.json();
+      throw new Error(`创建 Tree 失败：${e.message}`);
+    }
+    const newTreeSHA = (await treeRes.json()).sha;
+    addLog('ok', `Tree 创建成功：${newTreeSHA.substring(0,7)}`);
+    setProgress(72);
+    doneIds.push('s4');
+
+    // Step 5: 创建 Commit
+    renderSteps('s5', doneIds);
+    addLog('info', `创建 Commit 对象…`);
+    const commitMsg = body ? `${title}\n\n${body}` : title;
+    const commitRes = await ghApi('git/commits', token, cfg, 'POST', {
+      message: commitMsg,
+      tree: newTreeSHA,
+      parents: [headSHA],
+      author: {
+        name:  cfg.committerName,
+        email: cfg.committerEmail,
+        date:  new Date().toISOString()
+      }
+    });
+    if (!commitRes.ok) {
+      const e = await commitRes.json();
+      throw new Error(`创建 Commit 失败：${e.message}`);
+    }
+    const newCommitSHA = (await commitRes.json()).sha;
+    addLog('ok', `Commit 创建成功：${newCommitSHA.substring(0,7)}`);
+    setProgress(86);
+    doneIds.push('s5');
+
+    // Step 6: 更新分支引用
+    renderSteps('s6', doneIds);
+    addLog('info', `更新分支 ${branch} 引用…`);
+    const updateRes = await ghApi(`git/refs/heads/${branch}`, token, cfg, 'PATCH', {
+      sha: newCommitSHA,
+      force: false
+    });
+    if (!updateRes.ok) {
+      const e = await updateRes.json();
+      throw new Error(`更新分支失败：${e.message}`);
+    }
+    addLog('ok', `分支 ${branch} 已更新 → ${newCommitSHA.substring(0,7)}`);
+    setProgress(100);
+    doneIds.push('s6');
+    renderSteps(null, doneIds);
+
+    const commitUrl = `https://github.com/${cfg.owner}/${cfg.repo}/commit/${newCommitSHA}`;
+    addLog('ok', `🎉 推送成功！查看提交：${commitUrl}`);
+
+    finalEl.innerHTML = `
+      <div class="alert alert-success" style="margin-top:12px;">
+        <span class="alert-icon">🎉</span>
+        <div>
+          推送成功！Commit：<code>${newCommitSHA.substring(0,7)}</code>
+          <br>
+          <a href="${commitUrl}" target="_blank" rel="noopener" style="color:#155724; font-weight:600;">
+            在 GitHub 查看这次提交 →
+          </a>
+        </div>
+      </div>
+    `;
+    document.getElementById('push-status-inline').textContent = '✅ 推送成功！';
+
+  } catch(err) {
+    addLog('err', '❌ ' + err.message);
+    renderSteps(null, doneIds, doneIds.length < stepDefs.length ? stepDefs[doneIds.length].id : null);
+    finalEl.innerHTML = `
+      <div class="alert alert-danger" style="margin-top:12px;">
+        <span class="alert-icon">❌</span>
+        <div><strong>推送失败：</strong>${escHtml(err.message)}</div>
+      </div>
+    `;
+    document.getElementById('push-status-inline').textContent = '❌ 推送失败';
+  }
+
+  document.getElementById('push-btn').disabled = false;
+}
+
+/* =============================================
+   GitHub API 辅助函数
+   ============================================= */
+function ghApi(endpoint, token, cfg, method = 'GET', body = null) {
+  const url = `https://api.github.com/repos/${cfg.owner}/${cfg.repo}/${endpoint}`;
+  const opts = {
+    method,
+    headers: {
+      Authorization: `Bearer ${token}`,
+      Accept: 'application/vnd.github.v3+json',
+      'Content-Type': 'application/json',
+    }
+  };
+  if (body) opts.body = JSON.stringify(body);
+  return fetch(url, opts);
+}
+
+async function getTreeSHA(commitSHA, token, cfg) {
+  const res = await ghApi(`git/commits/${commitSHA}`, token, cfg);
+  const data = await res.json();
+  return data.tree.sha;
+}
+
+function delay(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+function escHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+/* =============================================
+   提交历史
+   ============================================= */
+async function loadHistory() {
+  const el = document.getElementById('history-list');
+  el.innerHTML = '<div style="text-align:center; padding:30px; color:var(--text-sub);"><i class="fas fa-spinner fa-spin"></i> 加载中…</div>';
+  const token = getToken();
+  const cfg = getConfig();
+  if (!token) {
+    el.innerHTML = `
+      <div class="alert alert-warning">
+        <span class="alert-icon">⚠️</span>
+        <div>请先配置 GitHub Token 才能加载提交历史</div>
+      </div>
+    `;
+    return;
+  }
+  try {
+    const res = await fetch(
+      `https://api.github.com/repos/${cfg.owner}/${cfg.repo}/commits?per_page=20&sha=${cfg.branch}`,
+      { headers: { Authorization: `Bearer ${token}`, Accept: 'application/vnd.github.v3+json' } }
+    );
+    if (!res.ok) {
+      const err = await res.json();
+      el.innerHTML = `<div class="alert alert-danger"><span class="alert-icon">❌</span><div>加载失败：${err.message}</div></div>`;
+      return;
+    }
+    const commits = await res.json();
+    if (!commits.length) {
+      el.innerHTML = '<div style="text-align:center; padding:30px; color:var(--text-sub);">暂无提交记录</div>';
+      return;
+    }
+    el.innerHTML = `
+      <ul class="commit-list">
+        ${commits.map(c => {
+          const msg   = c.commit.message.split('\n')[0];
+          const author = c.commit.author.name || '未知';
+          const date  = new Date(c.commit.author.date).toLocaleString('zh-CN');
+          const sha   = c.sha.substring(0, 7);
+          const avatar = (author || 'N').charAt(0).toUpperCase();
+          return `
+            <li class="commit-item">
+              <div class="commit-avatar">${avatar}</div>
+              <div class="commit-info">
+                <div class="commit-msg" title="${escHtml(c.commit.message)}">${escHtml(msg)}</div>
+                <div class="commit-meta">${author} · ${date}</div>
+              </div>
+              <a class="commit-sha" href="${c.html_url}" target="_blank" rel="noopener">${sha}</a>
+            </li>
+          `;
+        }).join('')}
+      </ul>
+    `;
+  } catch(e) {
+    el.innerHTML = `<div class="alert alert-danger"><span class="alert-icon">❌</span><div>网络错误：${escHtml(e.message)}</div></div>`;
+  }
+}
+
+/* =============================================
+   重置表单
+   ============================================= */
+function resetForm() {
+  document.getElementById('commit-title').value = '';
+  document.getElementById('commit-body').value  = '';
+  document.getElementById('target-branch').value = getConfig().branch;
+  document.getElementById('dry-run').checked = false;
+  document.querySelectorAll('.template-chip').forEach(c => c.classList.remove('selected'));
+  document.getElementById('push-result').classList.remove('visible');
+  document.getElementById('push-status-inline').textContent = '';
+  selectAllFiles(true);
+}
+</script>
+<script src="https://www.genspark.ai/sandbox_inspect.js"></script></body>
+</html>
