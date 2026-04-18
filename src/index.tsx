@@ -535,6 +535,28 @@ function shell(title: string, active: string, body: string, script = '') {
     @media (max-width: 700px) {
       .sidebar { width: 160px; min-width: 160px; }
       .main { margin-left: 160px; padding: 32px 20px 72px; }
+      .card { max-width: 100%; }
+    }
+    @media (max-width: 480px) {
+      .sidebar {
+        width: 100%; height: auto; min-width: unset;
+        position: relative;
+        flex-direction: row;
+        align-items: center;
+        border-right: none;
+        border-bottom: 1px solid rgba(255,255,255,0.38);
+        padding: 0;
+      }
+      .sb-brand { padding: 14px 16px; border-bottom: none; flex-shrink: 0; }
+      .sb-brand h1 { font-size: 26px; }
+      .sb-nav { flex: 1; padding: 0; display: flex; flex-direction: row; gap: 0; }
+      .sb-link { padding: 14px 14px; font-size: 7px; }
+      .sb-foot { display: none; }
+      .wrap { flex-direction: column; }
+      .main { margin-left: 0; padding: 24px 16px 80px; min-height: unset; }
+      .card { max-width: 100%; }
+      .mbox { width: 96vw; padding: 24px 18px 20px; }
+      .fab { bottom: 20px; right: 20px; width: 46px; height: 46px; font-size: 20px; }
     }
   </style>
 </head>
@@ -705,7 +727,8 @@ function shell(title: string, active: string, body: string, script = '') {
         setTimeout(function(){ _token=''; localStorage.removeItem('neko_token'); localStorage.removeItem('neko_token_exp'); applyAuthUI(); showToast('登录已过期，请重新解锁'); }, 30*60*1000);
         closeAuth();
         applyAuthUI();
-        load();
+        // do NOT re-fetch on login: re-render existing cache to preserve data
+        render(_cachedList);
         showToast('已解锁 🔓');
       } else {
         document.getElementById('authErr').textContent='密码错误，请重试';
@@ -1020,13 +1043,21 @@ hono.get('/', (c) => {
     async function load(){
       try{
         const r=await fetch('/api/trips');
-        if(!r.ok){ render([]); return; }
+        if(!r.ok){ render(_cachedList.length ? _cachedList : []); return; }
         const d=await r.json();
-        _cachedList=d.entries||[];
+        // merge: keep any locally-added entries not yet in server response
+        const serverIds = new Set((d.entries||[]).map(function(e){return e.id;}));
+        const localOnly = _cachedList.filter(function(e){return !serverIds.has(e.id);});
+        _cachedList = (d.entries||[]).concat(localOnly);
+        _cachedList.sort(function(a,b){
+          if(a.pinned&&!b.pinned) return -1;
+          if(!a.pinned&&b.pinned) return 1;
+          return (b.createdAt||b.date).localeCompare(a.createdAt||a.date);
+        });
         render(_cachedList);
       }catch(err){
-        // network error: show empty state instead of stuck "loading"
-        render([]);
+        // network error: keep existing cache instead of wiping to empty
+        render(_cachedList);
       }
     }
 
@@ -1076,7 +1107,10 @@ hono.get('/', (c) => {
 
         const dateDiv=document.createElement('div');
         dateDiv.className='tc-date';
-        dateDiv.textContent=mo[nd.getMonth()]+' '+nd.getDate()+', '+nd.getFullYear();
+        // parse e.date (YYYY-MM-DD) for display
+        var _dp=e.date?e.date.split('-'):null;
+        var _dstr=_dp ? (mo[parseInt(_dp[1],10)-1]+' '+parseInt(_dp[2],10)+', '+_dp[0]) : e.date;
+        dateDiv.textContent=_dstr;
         if(e.pinned){
           const pin=document.createElement('span');
           pin.style.cssText='color:#a07060;font-size:9px;margin-left:4px';
@@ -1263,11 +1297,30 @@ hono.get('/', (c) => {
     }
 
     async function view(id){
+      cid=id;
+      // try local cache first (avoids hitting a fresh/empty Worker instance)
+      const cached=_cachedList.find(function(e){return e.id===id;});
+      // if we have the full entry in cache (with images), use it directly
+      if(cached && cached._full){
+        _renderView(cached); return;
+      }
+      // otherwise fetch from server for full data (images)
       const r=await fetch('/api/trips/'+id);
       const d=await r.json();
-      if(!d.entry) return;
-      const e=d.entry; cid=id;
-      document.getElementById('vdate').textContent=e.date;
+      if(!d.entry) {
+        // if server returned nothing, try rendering from cache without images
+        if(cached){ _renderView(cached); } return;
+      }
+      const e=d.entry;
+      // cache the full entry
+      const idx=_cachedList.findIndex(function(c){return c.id===id;});
+      if(idx>=0){ _cachedList[idx]=Object.assign({},_cachedList[idx],e,{_full:true}); }
+      _renderView(e);
+    }
+
+    function _renderView(e){
+      var _dp2=e.date?e.date.split('-'):null;
+      document.getElementById('vdate').textContent=_dp2?(mo[parseInt(_dp2[1],10)-1]+' '+parseInt(_dp2[2],10)+', '+_dp2[0]):e.date;
       document.getElementById('vtitle').textContent=e.title;
       document.getElementById('vemoji').textContent='';
       document.getElementById('vcontent').textContent=e.content;
@@ -1355,7 +1408,7 @@ hono.get('/', (c) => {
       document.getElementById('viewOv').classList.add('show');
       // apply auth UI for edit/delete buttons
       applyAuthUI();
-    }
+    }  // end _renderView
 
     async function togglePin(){
       if(!isAuthed()){ showToast('请先解锁'); return; }
@@ -1389,8 +1442,9 @@ hono.get('/', (c) => {
     function editCurrent(){
       if(!isAuthed()){ showToast('请先解锁'); return; }
       closeView();
-      fetch('/api/trips/'+cid).then(r=>r.json()).then(d=>{
-        const e=d.entry;
+      // use cached full entry if available, otherwise fetch
+      const cachedFull=_cachedList.find(function(e){return e.id===cid && e._full;});
+      function _populateEdit(e){
         document.getElementById('eid').value=e.id;
         document.getElementById('edate').value=e.date;
         document.getElementById('etitle').value=e.title||'';
@@ -1400,10 +1454,19 @@ hono.get('/', (c) => {
         renderImgPreview();
         const wrap=document.getElementById('elinks');
         wrap.innerHTML='';
-        (e.links||[]).forEach(l=>addLinkRow(l.url));
+        (e.links||[]).forEach(function(l){addLinkRow(l.url);});
         document.getElementById('editTitle').textContent='EDIT ENTRY';
         document.getElementById('editOv').classList.add('show');
         applyAuthUI();
+      }
+      if(cachedFull){ _populateEdit(cachedFull); return; }
+      fetch('/api/trips/'+cid).then(function(r){return r.json();}).then(function(d){
+        if(!d.entry) return;
+        const e=d.entry;
+        // cache it
+        const idx=_cachedList.findIndex(function(c){return c.id===cid;});
+        if(idx>=0){ _cachedList[idx]=Object.assign({},_cachedList[idx],e,{_full:true}); }
+        _populateEdit(e);
       });
     }
 
