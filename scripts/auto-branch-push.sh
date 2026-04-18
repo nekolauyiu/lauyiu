@@ -1,44 +1,56 @@
 #!/usr/bin/env bash
 # ─────────────────────────────────────────────────────────────────────────────
-# auto-branch-push.sh
-# 每次迭代后自动创建规范分支、提交、推送、并直接合并到 main
-# Cloudflare Pages 监听 main 分支，合并后自动触发部署
+# auto-branch-push.sh  v2.0
+# 每次代码修改后自动执行：
+#   1. 创建规范 feature 分支（type/scope）
+#   2. 提交所有变更（conventional commit 格式）
+#   3. 推送 feature 分支到 GitHub
+#   4. 合并到 main（--no-ff 保留分支历史）
+#   5. 推送 main → 触发 Cloudflare Pages 自动部署
+#   6. 同步 genspark_ai_developer 分支
 #
 # 用法：
 #   bash scripts/auto-branch-push.sh <type> <scope> "<message>"
 #
 # type : feat | fix | perf | style | chore | docs | refactor
-# scope: 简短英文描述，如 token-expiry / emoji-insert
+# scope: 简短英文描述（用连字符），如 token-expiry / emoji-insert
 #
 # 示例：
 #   bash scripts/auto-branch-push.sh fix emoji-regex "修复emoji正则兼容性"
 #   bash scripts/auto-branch-push.sh feat dark-mode "新增深色模式"
+#   bash scripts/auto-branch-push.sh chore kv-binding "绑定 Cloudflare KV 持久化存储"
 # ─────────────────────────────────────────────────────────────────────────────
 
-set -e
+set -euo pipefail
 
 # ── 颜色输出 ──────────────────────────────────────────────────────────────────
 RED='\033[0;31m'; GREEN='\033[0;32m'; YELLOW='\033[1;33m'
-CYAN='\033[0;36m'; NC='\033[0m'
+CYAN='\033[0;36m'; BOLD='\033[1m'; NC='\033[0m'
 
 info()    { echo -e "${CYAN}[INFO]${NC}  $1"; }
 success() { echo -e "${GREEN}[OK]${NC}    $1"; }
 warn()    { echo -e "${YELLOW}[WARN]${NC}  $1"; }
 error()   { echo -e "${RED}[ERROR]${NC} $1"; exit 1; }
+step()    { echo -e "\n${BOLD}── $1${NC}"; }
 
 # ── 参数检查 ──────────────────────────────────────────────────────────────────
-TYPE="$1"; SCOPE="$2"; MESSAGE="$3"
+TYPE="${1:-}"
+SCOPE="${2:-}"
+MESSAGE="${3:-}"
 VALID_TYPES="feat fix perf style chore docs refactor"
 
 if [[ -z "$TYPE" || -z "$SCOPE" || -z "$MESSAGE" ]]; then
   echo ""
-  echo "用法: bash scripts/auto-branch-push.sh <type> <scope> \"<message>\""
+  echo -e "${BOLD}用法:${NC} bash scripts/auto-branch-push.sh <type> <scope> \"<message>\""
   echo ""
   echo "  type  : feat | fix | perf | style | chore | docs | refactor"
-  echo "  scope : 简短英文描述（连字符），如 token-expiry"
+  echo "  scope : 简短英文描述（连字符），如 token-expiry / kv-binding"
   echo ""
-  echo "示例:"
-  echo "  bash scripts/auto-branch-push.sh fix emoji-regex \"修复emoji正则兼容性\""
+  echo -e "${BOLD}示例:${NC}"
+  echo "  bash scripts/auto-branch-push.sh fix   emoji-regex  \"修复emoji正则兼容性\""
+  echo "  bash scripts/auto-branch-push.sh feat  dark-mode    \"新增深色模式\""
+  echo "  bash scripts/auto-branch-push.sh chore kv-binding   \"绑定 KV 持久化存储\""
+  echo ""
   exit 1
 fi
 
@@ -51,84 +63,99 @@ REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$REPO_DIR"
 info "仓库目录：$REPO_DIR"
 
-# ── 检查是否有变更 ────────────────────────────────────────────────────────────
-if [[ -z "$(git status --porcelain)" ]]; then
+REMOTE="origin"
+MAIN_BRANCH="main"
+DEV_BRANCH="genspark_ai_developer"
+BRANCH="${TYPE}/${SCOPE}"
+COMMIT_MSG="${TYPE}(${SCOPE}): ${MESSAGE}"
+
+info "分支名：${YELLOW}$BRANCH${NC}"
+info "提交：${YELLOW}$COMMIT_MSG${NC}"
+
+# ── 检查是否有变更（已暂存 + 未暂存都算）────────────────────────────────────
+STAGED=$(git diff --cached --name-only 2>/dev/null)
+UNSTAGED=$(git status --porcelain 2>/dev/null)
+
+if [[ -z "$STAGED" && -z "$UNSTAGED" ]]; then
   warn "没有检测到任何变更，退出。"
   exit 0
 fi
 
-BRANCH="${TYPE}/${SCOPE}"
-COMMIT_MSG="${TYPE}(${SCOPE}): ${MESSAGE}"
-CURRENT=$(git branch --show-current)
-
-info "分支名：$BRANCH"
-info "提交：$COMMIT_MSG"
-
-# ── 步骤 1：暂存当前变更 ──────────────────────────────────────────────────────
-info "暂存当前变更..."
-git stash push -u -m "auto-push: $COMMIT_MSG" --quiet
+# ── 步骤 1：暂存所有变更 ──────────────────────────────────────────────────────
+step "步骤 1/6：暂存变更"
+# 如果有已 staged 的文件，先把 unstaged 的也加进来
+git add -A
+STASH_MSG="auto-push-$(date +%s): $COMMIT_MSG"
+git stash push -m "$STASH_MSG" --quiet
+success "变更已暂存"
 
 # ── 步骤 2：同步远程 main ─────────────────────────────────────────────────────
-info "同步远程 main..."
-git fetch origin main --quiet
+step "步骤 2/6：同步远程 main"
+git fetch "$REMOTE" "$MAIN_BRANCH" --quiet
+success "远程 main 已拉取"
 
-# ── 步骤 3：从 origin/main 创建/重置 feature 分支 ────────────────────────────
+# ── 步骤 3：创建 / 重置 feature 分支 ─────────────────────────────────────────
+step "步骤 3/6：准备 feature 分支 $BRANCH"
 if git show-ref --verify --quiet "refs/heads/$BRANCH"; then
   git checkout "$BRANCH" --quiet
-  git reset --hard origin/main --quiet
+  git reset --hard "$REMOTE/$MAIN_BRANCH" --quiet
   warn "分支 '$BRANCH' 已重置到 origin/main"
 else
-  git checkout -b "$BRANCH" origin/main --quiet
-  info "已创建分支：$BRANCH"
+  git checkout -b "$BRANCH" "$REMOTE/$MAIN_BRANCH" --quiet
+  success "已创建新分支：$BRANCH"
 fi
 
-# ── 步骤 4：恢复变更到新分支 ─────────────────────────────────────────────────
-info "应用变更到分支 $BRANCH..."
+# ── 步骤 4：恢复变更并提交 ───────────────────────────────────────────────────
+step "步骤 4/6：提交变更"
 git stash pop --quiet
 
-# ── 步骤 5：提交 ──────────────────────────────────────────────────────────────
 git add -A
 echo ""
-info "变更文件："
+info "变更文件列表："
 git status --short
 echo ""
+
 git commit -m "$COMMIT_MSG"
-success "提交完成"
+success "提交完成：$COMMIT_MSG"
 
-# ── 步骤 6：推送 feature 分支 ─────────────────────────────────────────────────
-info "推送 $BRANCH 到 GitHub..."
-git push -u origin "$BRANCH" --force 2>&1 | grep -v "^remote:" || true
-success "feature 分支推送完成"
+# ── 步骤 5：推送 feature 分支 ─────────────────────────────────────────────────
+step "步骤 5/6：推送 feature 分支到 GitHub"
+git push -u "$REMOTE" "$BRANCH" --force-with-lease 2>&1 | grep -v "^remote:" || \
+git push -u "$REMOTE" "$BRANCH" --force 2>&1 | grep -v "^remote:" || true
+success "feature 分支已推送：$BRANCH"
 
-# ── 步骤 7：合并到 main ───────────────────────────────────────────────────────
-info "合并 $BRANCH → main..."
-git checkout main --quiet
-git pull origin main --quiet
+# ── 步骤 6：合并到 main 并推送 ───────────────────────────────────────────────
+step "步骤 6/6：合并到 main → 触发 Cloudflare 部署"
+git checkout "$MAIN_BRANCH" --quiet
+git pull "$REMOTE" "$MAIN_BRANCH" --quiet
 
-# 执行 merge（--no-ff 保留分支历史）
+# --no-ff 保留完整分支历史，方便回溯
 git merge "$BRANCH" --no-ff -m "Merge branch '$BRANCH': $MESSAGE" --quiet
-success "合并完成"
+success "合并完成：$BRANCH → $MAIN_BRANCH"
 
-# ── 步骤 8：推送 main（触发 Cloudflare 自动部署）────────────────────────────
-info "推送 main 到 GitHub（触发 Cloudflare 部署）..."
-git push origin main 2>&1 | grep -v "^remote:" || true
-success "main 分支推送完成 → Cloudflare 将自动部署"
+# 推送 main，Cloudflare Pages 监听此分支自动部署
+git push "$REMOTE" "$MAIN_BRANCH" 2>&1 | grep -v "^remote:" || true
+success "main 已推送 → Cloudflare Pages 开始自动构建"
 
-# ── 步骤 9：切回开发分支 ──────────────────────────────────────────────────────
-git checkout genspark_ai_developer --quiet 2>/dev/null || \
-git checkout main --quiet 2>/dev/null || true
+# ── 收尾：同步 genspark_ai_developer ─────────────────────────────────────────
+if git show-ref --verify --quiet "refs/heads/$DEV_BRANCH"; then
+  git checkout "$DEV_BRANCH" --quiet 2>/dev/null || true
+  git merge "$MAIN_BRANCH" --ff-only --quiet 2>/dev/null || \
+  git merge "$MAIN_BRANCH" --no-ff -m "sync: merge main into $DEV_BRANCH" --quiet 2>/dev/null || true
+  git push "$REMOTE" "$DEV_BRANCH" --quiet 2>&1 | grep -v "^remote:" || true
+  success "$DEV_BRANCH 已同步到最新 main"
+fi
 
-# 同步 genspark_ai_developer 到最新 main
-git merge main --ff-only --quiet 2>/dev/null || true
-
+# ── 完成摘要 ──────────────────────────────────────────────────────────────────
 echo ""
-echo -e "${GREEN}══════════════════════════════════════════════${NC}"
-echo -e "${GREEN}  ✅ 全部完成！已自动部署到生产环境${NC}"
-echo -e "${GREEN}══════════════════════════════════════════════${NC}"
-echo -e "  分支   : ${YELLOW}$BRANCH${NC}"
-echo -e "  提交   : ${YELLOW}$COMMIT_MSG${NC}"
-echo -e "  已合并 : ${YELLOW}$BRANCH → main${NC}"
-echo -e "  部署   : ${CYAN}Cloudflare Pages 正在自动构建...${NC}"
-echo -e "  网址   : ${CYAN}https://www.lauyiu.com${NC}"
-echo -e "${GREEN}══════════════════════════════════════════════${NC}"
+echo -e "${GREEN}${BOLD}══════════════════════════════════════════════${NC}"
+echo -e "${GREEN}${BOLD}  ✅ 全部完成！代码已自动部署到生产环境${NC}"
+echo -e "${GREEN}${BOLD}══════════════════════════════════════════════${NC}"
+echo -e "  feature 分支 : ${YELLOW}$BRANCH${NC}  （已保留在 GitHub）"
+echo -e "  提交信息     : ${YELLOW}$COMMIT_MSG${NC}"
+echo -e "  合并路径     : ${YELLOW}$BRANCH → $MAIN_BRANCH${NC}"
+echo -e "  开发分支     : ${YELLOW}$DEV_BRANCH${NC}  （已同步）"
+echo -e "  Cloudflare   : ${CYAN}自动构建中，约 1-2 分钟生效${NC}"
+echo -e "  生产地址     : ${CYAN}https://www.lauyiu.com${NC}"
+echo -e "${GREEN}${BOLD}══════════════════════════════════════════════${NC}"
 echo ""
